@@ -20,7 +20,6 @@ async function bootstrap() {
       'Documentation of API that interact on Microfinance based on DJoin Case',
     )
     .setVersion('1.0.0')
-    .addTag('Consumer')
     .addBearerAuth()
     .build();
 
