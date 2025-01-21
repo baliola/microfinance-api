@@ -5,5 +5,5 @@ export class StatusProviderDelegationDTO {
   nik: string;
 
   @IsString()
-  provider_wallet_address: string;
+  creditor_wallet_address: string;
 }
