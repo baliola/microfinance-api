@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConsumerModule } from './module/consumer/consumer.module';
-import { CustomerModule } from './module/customer/customer.module';
-import { ProviderModule } from './module/provider/provider.module';
+import { CreditorModule } from './model/creditor/creditor.module';
+import { DebtorModule } from './model/debtor/debtor.module';
 
 @Module({
-  imports: [ConsumerModule, CustomerModule, ProviderModule],
+  imports: [CreditorModule, DebtorModule],
 })
 export class AppModule {}
