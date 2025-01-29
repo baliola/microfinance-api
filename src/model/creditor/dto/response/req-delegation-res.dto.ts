@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionRequestType } from 'src/utils/type';
+import { TransactionRequestType } from 'src/utils/type/type';
 
 export class ReqDelegationResponseDTO {
   @ApiProperty({

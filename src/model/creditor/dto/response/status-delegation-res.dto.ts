@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionType } from 'src/utils/type';
+import { TransactionType } from 'src/utils/type/type';
 
 export class StatusDelegationResponseDTO {
   @ApiProperty({

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionResponseType } from 'src/utils/type';
+import { TransactionResponseType } from 'src/utils/type/type';
 
 export class DelegationApprovalResponseDTO {
   @ApiProperty({
@@ -13,4 +13,6 @@ export class DelegationApprovalResponseDTO {
     example: '0x123abc...',
   })
   transaction_hash: `0x${string}`;
+
+  message: string;
 }

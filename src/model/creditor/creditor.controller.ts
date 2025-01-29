@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
 import { StatusProviderDelegationDTO } from './dto/status-delegation.dto';
 import {
   ApiBadRequestResponse,
+  ApiCreatedResponse,
   ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
@@ -15,15 +16,21 @@ import { WrapperResponseDTO } from 'src/common/helper/response';
 import { DelegationApprovalResponseDTO } from './dto/response/delegation-approval-res.dto';
 import { StatusDelegationResponseDTO } from './dto/response/status-delegation-res.dto';
 import { RegistrationCreditorResponseDTO } from './dto/response/registration-res.dto';
+import { CreditorService } from './creditor.service';
 
 @Controller('/api/creditor')
 export class CreditorController {
+  constructor(
+    private readonly creditorService: CreditorService,
+    private readonly logger: Logger,
+  ) {}
+
   @ApiExtraModels(WrapperResponseDTO, ReqDelegationResponseDTO)
   @ApiOperation({
     summary: 'Request Delegation',
     description: 'Request delegation to creditor for accessing data.',
   })
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     description: 'Creditor approval request successfully sent.',
     schema: {
       allOf: [
@@ -52,9 +59,19 @@ export class CreditorController {
   @Post('/creditor-delegation')
   async reqCreditorApproval(
     @Body() dto: ReqCreditorDelegationDTO,
-  ): Promise<ReqDelegationResponseDTO> {
-    console.log('dto: ', dto);
-    return { transaction_hash: '0x...', status: 'PENDING' };
+  ): Promise<WrapperResponseDTO<ReqDelegationResponseDTO>> {
+    const { nik, creditor_wallet_address } = dto;
+    await this.creditorService.createDelegation(nik, creditor_wallet_address);
+
+    const response: ReqDelegationResponseDTO = {
+      transaction_hash: '0xbatu...',
+      status: 'PENDING',
+    };
+    this.logger.log('Request success.');
+    return new WrapperResponseDTO(
+      response,
+      'Delegation request to creditor sent.',
+    );
   }
 
   @ApiExtraModels(WrapperResponseDTO, StatusDelegationResponseDTO)
@@ -131,9 +148,19 @@ export class CreditorController {
   })
   async statusCreditorDelegation(
     @Query() dto: StatusProviderDelegationDTO,
-  ): Promise<StatusDelegationResponseDTO> {
-    console.log('dto: ', dto);
-    return { status: 'APPROVED' };
+  ): Promise<WrapperResponseDTO<StatusProviderDelegationDTO>> {
+    const { nik, creditor_wallet_address } = dto;
+    await this.creditorService.getStatusCreditorDelegation(
+      nik,
+      creditor_wallet_address,
+    );
+
+    const response: StatusProviderDelegationDTO = {
+      nik: '2123...',
+      creditor_wallet_address: '0x...',
+    };
+    this.logger.log('Request success.');
+    return new WrapperResponseDTO(response, 'waduh success');
   }
 
   @ApiExtraModels(WrapperResponseDTO, DelegationApprovalResponseDTO)
@@ -192,9 +219,22 @@ export class CreditorController {
   @Post('/delegation-approval')
   async delegationApproval(
     @Body() dto: DelegationApprovalDTO,
-  ): Promise<DelegationApprovalResponseDTO> {
-    console.log(dto);
-    return { status: 'APPROVED', transaction_hash: '0x123...' };
+  ): Promise<WrapperResponseDTO<DelegationApprovalResponseDTO>> {
+    const { nik, is_approve, creditor_walet_address } = dto;
+
+    await this.creditorService.delegationApproval(
+      nik,
+      is_approve,
+      creditor_walet_address,
+    );
+
+    const response: DelegationApprovalResponseDTO = {
+      status: 'APPROVED',
+      transaction_hash: '0x123...',
+      message: 'Delegation has been accepted.',
+    };
+    this.logger.log('Request success.');
+    return new WrapperResponseDTO(response, 'waduh success');
   }
 
   @ApiExtraModels(WrapperResponseDTO, RegistrationCreditorResponseDTO)
@@ -229,5 +269,9 @@ export class CreditorController {
     },
   })
   @Post('registration')
-  async registration(): Promise<void> {}
+  async registration(): Promise<WrapperResponseDTO<void>> {
+    await this.creditorService.registration();
+    this.logger.log('Request success.');
+    return new WrapperResponseDTO(null, 'Creditor registration success.');
+  }
 }
