@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
-import { StatusProviderDelegationDTO } from './dto/status-delegation.dto';
+import { StatusCreditorDelegationDTO } from './dto/status-delegation.dto';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
@@ -12,11 +12,11 @@ import {
 import { ReqCreditorDelegationDTO } from './dto/req-delegation.dto';
 import { DelegationApprovalDTO } from './dto/delegation-approval.dto';
 import { ReqDelegationResponseDTO } from './dto/response/req-delegation-res.dto';
-import { WrapperResponseDTO } from 'src/common/helper/response';
 import { DelegationApprovalResponseDTO } from './dto/response/delegation-approval-res.dto';
 import { StatusDelegationResponseDTO } from './dto/response/status-delegation-res.dto';
 import { RegistrationCreditorResponseDTO } from './dto/response/registration-res.dto';
 import { CreditorService } from './creditor.service';
+import { WrapperResponseDTO } from '../../common/helper/response';
 
 @Controller('/api/creditor')
 export class CreditorController {
@@ -57,7 +57,7 @@ export class CreditorController {
     },
   })
   @Post('/creditor-delegation')
-  async reqCreditorApproval(
+  async reqCreditorDelegation(
     @Body() dto: ReqCreditorDelegationDTO,
   ): Promise<WrapperResponseDTO<ReqDelegationResponseDTO>> {
     const { nik, creditor_wallet_address } = dto;
@@ -147,15 +147,15 @@ export class CreditorController {
     example: '0x...',
   })
   async statusCreditorDelegation(
-    @Query() dto: StatusProviderDelegationDTO,
-  ): Promise<WrapperResponseDTO<StatusProviderDelegationDTO>> {
+    @Query() dto: StatusCreditorDelegationDTO,
+  ): Promise<WrapperResponseDTO<StatusCreditorDelegationDTO>> {
     const { nik, creditor_wallet_address } = dto;
     await this.creditorService.getStatusCreditorDelegation(
       nik,
       creditor_wallet_address,
     );
 
-    const response: StatusProviderDelegationDTO = {
+    const response: StatusCreditorDelegationDTO = {
       nik: '2123...',
       creditor_wallet_address: '0x...',
     };

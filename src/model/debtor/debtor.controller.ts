@@ -10,7 +10,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { LogActivityResponseDTO } from './dto/response/log-activity-response.dto';
-import { WrapperResponseDTO } from 'src/common/helper/response';
+import { WrapperResponseDTO } from '../../common/helper/response';
 import { RegistrationDebtorResponseDTO } from './dto/response/registration-res.dto';
 import { DebtorService } from './debtor.service';
 
@@ -88,7 +88,7 @@ export class DebtorController {
     },
   })
   @Get('/log-activity')
-  async approvalConsumer(
+  async logActivity(
     @Query() dto: LogActivityDTO,
   ): Promise<WrapperResponseDTO<LogActivityResponseDTO[]>> {
     try {
