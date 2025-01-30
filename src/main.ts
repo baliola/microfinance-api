@@ -12,7 +12,9 @@ import { ResponseInterceptor } from './interceptors/response/response.intercepto
 loadEnv();
 async function bootstrap() {
   const logger = new Logger();
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log'],
+  });
 
   // CORS Option.
   logger.log('Enabling CORS Options...');
@@ -71,7 +73,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   // Swagger Docs.
-  logger.log('Enbaling Swagger Docs...');
+  logger.log('Enabling Swagger Docs...');
   const swaggerOptions = new DocumentBuilder()
     .setTitle('Microfinance API')
     .setDescription(
@@ -89,7 +91,9 @@ async function bootstrap() {
   // Server Instance.
   const port = process.env.PORT;
   await app.listen(port);
-  logger.log(`Application running on: ${await app.getUrl()}`);
+  logger.log(
+    `Application running on: ${process.env.WEB_URL}://${process.env.HOST}:${process.env.PORT}`,
+  );
 }
 
 bootstrap();
