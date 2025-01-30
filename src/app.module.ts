@@ -1,10 +1,19 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { CreditorModule } from './model/creditor/creditor.module';
+import { DebtorModule } from './model/debtor/debtor.module';
+import { ConfigModule } from '@nestjs/config';
+import { validatedConfig } from './config.schema';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    CreditorModule,
+    DebtorModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV}` || '.env',
+      load: [() => validatedConfig],
+    }),
+  ],
+  providers: [],
 })
 export class AppModule {}
