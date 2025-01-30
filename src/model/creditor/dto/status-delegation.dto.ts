@@ -1,7 +1,7 @@
 import { IsString } from 'class-validator';
 import { WalletAddressType } from 'src/utils/type/type';
 
-export class StatusProviderDelegationDTO {
+export class StatusCreditorDelegationDTO {
   @IsString()
   nik: string;
 
