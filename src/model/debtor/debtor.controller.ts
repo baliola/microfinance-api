@@ -42,40 +42,13 @@ export class DebtorController {
         },
       ],
     },
-    examples: {
-      approved: {
-        summary: 'Approved log.',
-        value: {
-          data: {
-            creditor: 'Koperasi A',
-            status: 'APPROVED',
-            accessed_at: 'YYYY-MM-DD',
-          },
-          message: 'Log activity retrieved.',
-        },
+    example: {
+      data: {
+        creditor: ['0x123...', '0xabc...', '0xcde...'],
+        status: ['APPROVED', 'APPROVED', 'APPROVED'],
+        accessed_at: 'YYYY-MM-DD',
       },
-      rejected: {
-        summary: 'Rejected log.',
-        value: {
-          data: {
-            creditor: 'Koperasi A',
-            status: 'REJECTED',
-            accessed_at: 'YYYY-MM-DD',
-          },
-          message: 'Log activity retrieved.',
-        },
-      },
-      pending: {
-        summary: 'Pending log.',
-        value: {
-          data: {
-            creditor: 'Koperasi A',
-            status: 'PENDING',
-            accessed_at: 'YYYY-MM-DD',
-          },
-          message: 'Log activity retrieved.',
-        },
-      },
+      message: 'Log activity retrieved.',
     },
   })
   @ApiBadRequestResponse({
@@ -93,10 +66,11 @@ export class DebtorController {
   ): Promise<WrapperResponseDTO<LogActivityResponseDTO[]>> {
     try {
       const { nik } = dto;
-      await this.debtorService.getLogActivity(nik);
+      const { wallet_address, status } =
+        await this.debtorService.getLogActivity(nik);
 
       const response: LogActivityResponseDTO[] = [
-        { creditor: '0x', status: 'PENDING', accessed_at: new Date() },
+        { creditor: wallet_address, status, accessed_at: new Date() },
       ];
       this.logger.error('Request success.');
       return new WrapperResponseDTO(response, 'Success');
@@ -142,12 +116,14 @@ export class DebtorController {
   ): Promise<WrapperResponseDTO<RegistrationDebtorResponseDTO>> {
     try {
       const { nik } = dto;
-      await this.debtorService.registration(nik);
+      const { wallet_address, tx_hash } =
+        await this.debtorService.registration(nik);
 
       const response: RegistrationDebtorResponseDTO = {
-        wallet_address: '0x...',
+        wallet_address: wallet_address as `0x${string}`,
+        tx_hash: tx_hash as `0x${string}`,
       };
-      this.logger.error('Request success.');
+
       return new WrapperResponseDTO(response, 'Registration success.');
     } catch (error) {
       this.logger.error(error);
