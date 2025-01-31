@@ -7,4 +7,10 @@ export class RegistrationDebtorResponseDTO {
     example: '0x...',
   })
   wallet_address: WalletAddressType;
+
+  @ApiProperty({
+    description: 'Transaction Hash.',
+    example: '0x...',
+  })
+  tx_hash: WalletAddressType;
 }
