@@ -3,6 +3,7 @@ import { CreditorModule } from './model/creditor/creditor.module';
 import { DebtorModule } from './model/debtor/debtor.module';
 import { ConfigModule } from '@nestjs/config';
 import { validatedConfig } from './config.schema';
+import { EthersModule } from './providers/ethers/ethers.module';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { validatedConfig } from './config.schema';
       envFilePath: `.env.${process.env.NODE_ENV}` || '.env',
       load: [() => validatedConfig],
     }),
+    EthersModule,
   ],
-  providers: [],
 })
 export class AppModule {}
