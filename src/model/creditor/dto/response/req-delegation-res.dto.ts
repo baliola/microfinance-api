@@ -1,16 +1,51 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionRequestType } from 'src/utils/type/type';
 
 export class ReqDelegationResponseDTO {
   @ApiProperty({
-    description: 'Status of request delegation.',
-    example: 'PENDING',
+    description: 'Customer National Identity.',
+    example: '123...',
   })
-  status: TransactionRequestType;
+  nik: string;
+
+  @ApiProperty({
+    description: 'Request ID.',
+    example: '...',
+  })
+  request_id: string;
+
+  @ApiProperty({
+    description: 'Creditor Consumer Code.',
+    example: '0x123abc...',
+  })
+  creditor_consumer_code: `0x${string}`;
+
+  @ApiProperty({
+    description: 'Creditor Provider Code.',
+    example: '0x123abc...',
+  })
+  creditor_provider_code: `0x${string}`;
+
+  @ApiProperty({
+    description: 'Transaction ID.',
+    example: '...',
+  })
+  transaction_id: string;
+
+  @ApiProperty({
+    description: 'Reference ID.',
+    example: '...',
+  })
+  reference_id: string;
+
+  @ApiProperty({
+    description: 'Date of Request.',
+    example: '...',
+  })
+  request_date: string;
 
   @ApiProperty({
     description: 'Transaction hash of the transaction.',
     example: '0x123abc...',
   })
-  transaction_hash: `0x${string}`;
+  tx_hash: `0x${string}`;
 }
