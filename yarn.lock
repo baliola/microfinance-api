@@ -644,6 +644,16 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@litehex/node-vault@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@litehex/node-vault/-/node-vault-1.0.2.tgz#09ce22064221ae9290edaac94153f75952f9b4a6"
+  integrity sha512-H57+d4FvuJ2I++Yhj1iNG2cTY3uDntjUOE75iBE2OnNBwJNMADXWsZ5DLYaag+TrYTyvaLH5QzYui7N1jX+euQ==
+  dependencies:
+    lodash "^4.17.21"
+    p-safe "^1.0.0"
+    zod "^3.24.1"
+    zod-request "^0.2.2"
+
 "@ljharb/through@^2.3.12":
   version "2.3.13"
   resolved "https://registry.yarnpkg.com/@ljharb/through/-/through-2.3.13.tgz#b7e4766e0b65aa82e529be945ab078de79874edc"
@@ -3762,6 +3772,11 @@ multer@1.4.4-lts.1:
     type-is "^1.6.4"
     xtend "^4.0.0"
 
+mustache@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/mustache/-/mustache-4.2.0.tgz#e5892324d60a12ec9c2a73359edca52972bf6f64"
+  integrity sha512-71ippSywq5Yb7/tVYyGbkBggbU8H3u5Rz56fH60jGFgr8uHwxs+aSKeqmluIVzM0m0kB7xQjKS6qPfd0b2ZoqQ==
+
 mute-stream@0.0.8:
   version "0.0.8"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.8.tgz#1630c42b2251ff81e2a283de96a5497ea92e5e0d"
@@ -3918,6 +3933,11 @@ p-locate@^5.0.0:
   integrity sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==
   dependencies:
     p-limit "^3.0.2"
+
+p-safe@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/p-safe/-/p-safe-1.0.0.tgz#4cc37946080653ed50358d3d5d183237df1fe61d"
+  integrity sha512-hEKmRlhj105fU/6G2AGLH8Hn/D4F5hhEMn0h1D4pt1868l1LUv4u3yq/MqNE/Kvyg192Y/pHZgBaFykDiIIB+A==
 
 p-try@^2.0.0:
   version "2.2.0"
@@ -5084,7 +5104,15 @@ yocto-queue@^0.1.0:
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
 
-zod@^3.24.1:
+zod-request@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/zod-request/-/zod-request-0.2.2.tgz#1f08083551bdbb4ae6fa4d87255bc1185db0cba2"
+  integrity sha512-pL9/t+YflOEVpUY0izbsYdkEk8FsQlO5PPLJiinx7m6ZnwzXu/eeLboIkVMghpdMKyaToxiSiy9hSl4fKH/plg==
+  dependencies:
+    mustache "^4.2.0"
+    zod "^3.22.4"
+
+zod@^3.22.4, zod@^3.24.1:
   version "3.24.1"
   resolved "https://registry.yarnpkg.com/zod/-/zod-3.24.1.tgz#27445c912738c8ad1e9de1bea0359fa44d9d35ee"
   integrity sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==
