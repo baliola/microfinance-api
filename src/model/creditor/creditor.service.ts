@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ICreditorService } from './util/creditor.service.interface';
-import { TransactionType } from 'src/utils/type/type';
+import { TransactionType, TypeKey } from 'src/utils/type/type';
 import { EthersService } from '../../providers/ethers/ethers';
 import {
   AddDebtorToCreditorType,
@@ -8,25 +8,40 @@ import {
   DelegationApprovalType,
   RegistrationServiceType,
 } from './util/creditor-type.service';
-
+import { VaultService } from 'src/providers/vault/vault';
+import { ConfigService } from '@nestjs/config';
+import { encrypt } from 'src/utils/crypto';
 @Injectable()
 export class CreditorService implements ICreditorService {
   constructor(
     private readonly ethersService: EthersService,
     private readonly logger: Logger,
+    private readonly vaultService: VaultService,
+    private readonly configService: ConfigService,
   ) {}
 
   async registration(nik: string): Promise<RegistrationServiceType> {
     try {
-      const { address } = this.ethersService.generateWallet();
+      const { address, privateKey } = this.ethersService.generateWallet();
       const tx_hash = await this.ethersService.addCreditor(
         nik,
         address as `0x${string}`,
       );
 
+      const secret = this.configService.get<string>('VAULT_SECRET');
+
+      const { encryptedData } = encrypt(privateKey, secret);
+
+      await this.vaultService.storePrivateKey(
+        encryptedData,
+        address as `0x${string}`,
+        TypeKey.CREDITOR,
+      );
+
       return { wallet_address: address, tx_hash };
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -57,6 +72,7 @@ export class CreditorService implements ICreditorService {
       return tx;
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -70,6 +86,7 @@ export class CreditorService implements ICreditorService {
       return tx;
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -88,6 +105,7 @@ export class CreditorService implements ICreditorService {
       return tx;
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -116,6 +134,7 @@ export class CreditorService implements ICreditorService {
       return tx;
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 }

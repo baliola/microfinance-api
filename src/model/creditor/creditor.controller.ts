@@ -98,6 +98,7 @@ export class CreditorController {
       );
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -190,6 +191,7 @@ export class CreditorController {
       return new WrapperResponseDTO(response, 'waduh success');
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -269,6 +271,7 @@ export class CreditorController {
       return new WrapperResponseDTO(response, 'waduh success');
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -318,6 +321,7 @@ export class CreditorController {
       return new WrapperResponseDTO(response, 'Creditor registration success.');
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -397,6 +401,7 @@ export class CreditorController {
       );
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 }
