@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ICreditorService } from './util/creditor.service.interface';
-import { TransactionType, TypeKey } from 'src/utils/type/type';
+import {
+  TransactionResponseType,
+  TransactionType,
+  TypeKey,
+} from 'src/utils/type/type';
 import { EthersService } from '../../providers/ethers/ethers';
 import {
   AddDebtorToCreditorType,
@@ -20,11 +24,15 @@ export class CreditorService implements ICreditorService {
     private readonly configService: ConfigService,
   ) {}
 
-  async registration(nik: string): Promise<RegistrationServiceType> {
+  async registration(
+    creditor_code: string,
+    creditor_name: string,
+  ): Promise<RegistrationServiceType> {
     try {
       const { address, privateKey } = this.ethersService.generateWallet();
       const tx_hash = await this.ethersService.addCreditor(
-        nik,
+        creditor_code,
+        creditor_name,
         address as `0x${string}`,
       );
 
@@ -52,24 +60,28 @@ export class CreditorService implements ICreditorService {
     provider_code: string,
   ): Promise<DelegationApprovalType> {
     try {
-      let tx: any;
+      let tx_hash: any;
+      let status: TransactionResponseType;
       if (is_approve) {
-        tx = await this.ethersService.approveDelegation(
+        tx_hash = await this.ethersService.approveDelegation(
           nik,
           consumer_code,
           provider_code,
           1,
         );
+
+        status = 'APPROVED';
       } else {
-        tx = await this.ethersService.approveDelegation(
+        tx_hash = await this.ethersService.approveDelegation(
           nik,
           consumer_code,
           provider_code,
           0,
         );
+        status = 'REJECTED';
       }
 
-      return tx;
+      return { tx_hash, status };
     } catch (error) {
       this.logger.error(error);
       throw error;

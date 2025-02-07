@@ -7,7 +7,10 @@ import {
 } from './creditor-type.service';
 
 export interface ICreditorService {
-  registration(nik: string): Promise<RegistrationServiceType>;
+  registration(
+    creditor_code: string,
+    creditor_name: string,
+  ): Promise<RegistrationServiceType>;
   delegationApproval(
     nik: string,
     is_approve: boolean,
