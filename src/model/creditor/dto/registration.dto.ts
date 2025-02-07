@@ -8,4 +8,11 @@ export class RegistrationCreditorDTO {
   })
   @IsString()
   creditor_code: string;
+
+  @ApiProperty({
+    description: 'Creditor Name.',
+    example: 'Koperasi A',
+  })
+  @IsString()
+  creditor_name: string;
 }

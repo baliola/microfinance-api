@@ -7,19 +7,19 @@ export class ReqCreditorDelegationDTO {
     example: '123...',
   })
   @IsString()
-  customer_nik: string;
+  debtor_nik: string;
 
   @ApiProperty({
     description: 'Creditor Consumer Code.',
     example: '...',
   })
   @IsString()
-  consumer_code: string;
+  creditor_consumer_code: string;
 
   @ApiProperty({
     description: 'Creditor Provider Code.',
     example: '...',
   })
   @IsString()
-  provider_code: string;
+  creditor_provider_code: string;
 }

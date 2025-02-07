@@ -10,18 +10,18 @@ export class AddDebtorToCreditorDTO {
   debtor_nik: string;
 
   @ApiProperty({
+    description: 'Debtor name.',
+    example: 'Debtor name...',
+  })
+  @IsString()
+  debtor_name: string;
+
+  @ApiProperty({
     description: 'Unique code from creditor.',
     example: '...',
   })
   @IsString()
   creditor_code: string;
-
-  @ApiProperty({
-    description: 'Debtor name.',
-    example: 'Debtor name...',
-  })
-  @IsString()
-  name: string;
 
   @ApiProperty({
     description: 'Creditor name.',

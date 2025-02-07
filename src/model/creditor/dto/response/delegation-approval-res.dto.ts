@@ -13,6 +13,4 @@ export class DelegationApprovalResponseDTO {
     example: '0x123abc...',
   })
   transaction_hash: `0x${string}`;
-
-  message: string;
 }
