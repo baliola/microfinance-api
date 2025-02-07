@@ -64,28 +64,29 @@ export class CreditorController {
     @Body() dto: ReqCreditorDelegationDTO,
   ): Promise<WrapperResponseDTO<ReqDelegationResponseDTO>> {
     try {
-      const { customer_nik, consumer_code, provider_code } = dto;
+      const { debtor_nik, creditor_consumer_code, creditor_provider_code } =
+        dto;
 
       const {
         nik,
         request_id,
-        creditor_consumer_code,
-        creditor_provider_code,
+        consumer_code,
+        provider_code,
         transaction_id,
         reference_id,
         request_date,
         tx_hash,
       } = await this.creditorService.createDelegation(
-        customer_nik,
-        consumer_code,
-        provider_code,
+        debtor_nik,
+        creditor_consumer_code,
+        creditor_provider_code,
       );
 
       const response: ReqDelegationResponseDTO = {
         nik,
         request_id,
-        creditor_consumer_code,
-        creditor_provider_code,
+        creditor_consumer_code: consumer_code,
+        creditor_provider_code: provider_code,
         transaction_id,
         reference_id,
         request_date,
@@ -187,8 +188,18 @@ export class CreditorController {
       const response: StatusDelegationResponseDTO = {
         status,
       };
+
+      let message: string;
+      switch (status) {
+        case 'APPROVED':
+          message = 'Delegation approved.';
+        case 'PENDING':
+          message = 'Delegation pending.';
+        case 'REJECTED':
+          message = 'Delegation rejected.';
+      }
       this.logger.log('Request success.');
-      return new WrapperResponseDTO(response, 'waduh success');
+      return new WrapperResponseDTO(response, message);
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -253,22 +264,26 @@ export class CreditorController {
     @Body() dto: DelegationApprovalDTO,
   ): Promise<WrapperResponseDTO<DelegationApprovalResponseDTO>> {
     try {
-      const { customer_nik, is_approve, consumer_code, provider_code } = dto;
-
-      await this.creditorService.delegationApproval(
-        customer_nik,
+      const {
+        debtor_nik,
         is_approve,
-        consumer_code,
-        provider_code,
+        creditor_consumer_code,
+        creditor_provider_code,
+      } = dto;
+
+      const { tx_hash, status } = await this.creditorService.delegationApproval(
+        debtor_nik,
+        is_approve,
+        creditor_consumer_code,
+        creditor_provider_code,
       );
 
       const response: DelegationApprovalResponseDTO = {
-        status: 'APPROVED',
-        transaction_hash: '0x123...',
-        message: 'Delegation has been accepted.',
+        status,
+        transaction_hash: tx_hash,
       };
       this.logger.log('Request success.');
-      return new WrapperResponseDTO(response, 'waduh success');
+      return new WrapperResponseDTO(response, 'Delegation has been accepted.');
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -311,8 +326,9 @@ export class CreditorController {
     @Body() dto: RegistrationCreditorDTO,
   ): Promise<WrapperResponseDTO<RegistrationCreditorResponseDTO>> {
     try {
+      const { creditor_code, creditor_name } = dto;
       const { wallet_address, tx_hash } =
-        await this.creditorService.registration(dto.creditor_code);
+        await this.creditorService.registration(creditor_code, creditor_name);
 
       const response: RegistrationCreditorResponseDTO = {
         wallet_address: wallet_address as `0x${string}`,
@@ -364,7 +380,7 @@ export class CreditorController {
       const {
         debtor_nik,
         creditor_code,
-        name,
+        debtor_name,
         creditor_name,
         application_date,
         approval_date,
@@ -375,7 +391,7 @@ export class CreditorController {
       const data = await this.creditorService.addDebtorToCreditor(
         debtor_nik,
         creditor_code,
-        name,
+        debtor_name,
         creditor_name,
         application_date,
         approval_date,
