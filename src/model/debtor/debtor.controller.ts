@@ -65,15 +65,14 @@ export class DebtorController {
     @Query() dto: LogActivityDTO,
   ): Promise<WrapperResponseDTO<LogActivityResponseDTO[]>> {
     try {
-      const { nik } = dto;
+      const { debtor_nik } = dto;
       const { wallet_address, status } =
-        await this.debtorService.getLogActivity(nik);
+        await this.debtorService.getLogActivity(debtor_nik);
 
       const response: LogActivityResponseDTO[] = [
         { creditor: wallet_address, status, accessed_at: new Date() },
       ];
-      this.logger.error('Request success.');
-      return new WrapperResponseDTO(response, 'Success');
+      return new WrapperResponseDTO(response, 'Log activity retrieved.');
     } catch (error) {
       this.logger.error(error);
     }
@@ -115,9 +114,9 @@ export class DebtorController {
     @Body() dto: RegistrationDebtorDTO,
   ): Promise<WrapperResponseDTO<RegistrationDebtorResponseDTO>> {
     try {
-      const { nik } = dto;
+      const { debtor_nik } = dto;
       const { wallet_address, tx_hash } =
-        await this.debtorService.registration(nik);
+        await this.debtorService.registration(debtor_nik);
 
       const response: RegistrationDebtorResponseDTO = {
         wallet_address: wallet_address as `0x${string}`,
