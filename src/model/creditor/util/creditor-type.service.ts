@@ -1,10 +1,13 @@
+import { TransactionResponseType } from 'src/utils/type/type';
+
 export type RegistrationServiceType = {
   wallet_address: string;
   tx_hash: string;
 };
 
 export type DelegationApprovalType = {
-  tx_hash: string;
+  status: TransactionResponseType;
+  tx_hash: `0x${string}`;
 };
 
 export type AddDebtorToCreditorType = {
@@ -22,8 +25,8 @@ export type AddDebtorToCreditorType = {
 export type CreateDelegationType = {
   nik: string;
   request_id: string;
-  creditor_consumer_code: `0x${string}`;
-  creditor_provider_code: `0x${string}`;
+  consumer_code: `0x${string}`;
+  provider_code: `0x${string}`;
   transaction_id: string;
   reference_id: string;
   request_date: string;
