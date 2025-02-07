@@ -71,11 +71,16 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async addCreditor(creditor_code: string, creditor_address: `0x${string}`) {
+  async addCreditor(
+    creditor_code: string,
+    creditor_name: string,
+    creditor_address: `0x${string}`,
+  ) {
     try {
       const abiCoder = new AbiCoder();
       const tx = await this.contract.addCreditor(
         keccak256(abiCoder.encode(['string'], [creditor_code])),
+        keccak256(abiCoder.encode(['string'], [creditor_name])),
         creditor_address,
       );
       await tx.wait();
