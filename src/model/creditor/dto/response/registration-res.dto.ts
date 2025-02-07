@@ -8,5 +8,9 @@ export class RegistrationCreditorResponseDTO {
   })
   wallet_address: WalletAddressType;
 
-  message: string;
+  @ApiProperty({
+    description: 'Transaction hash.',
+    example: '...',
+  })
+  tx_hash: string;
 }
