@@ -1,7 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
+import { WalletAddressType } from 'src/utils/type/type';
 
 export class AddDebtorToCreditorDTO {
+  @ApiProperty({
+    description: 'Creditor Unique Address.',
+    example: '0x...',
+  })
+  @IsString()
+  creditor_address: WalletAddressType;
+
   @ApiProperty({
     description: 'National Identification number from debtor.',
     example: '123...',

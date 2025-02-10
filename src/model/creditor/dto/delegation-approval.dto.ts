@@ -1,7 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsString } from 'class-validator';
+import { WalletAddressType } from 'src/utils/type/type';
 
 export class DelegationApprovalDTO {
+  @ApiProperty({
+    description: 'Creditor (Provider) unique address.',
+    example: '0x...',
+  })
+  @IsString()
+  provider_address: WalletAddressType;
+
   @ApiProperty({
     description: 'National Identification number from Customer.',
     example: '123...',
