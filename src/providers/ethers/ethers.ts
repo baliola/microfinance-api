@@ -1,5 +1,6 @@
 import {
   Injectable,
+  InternalServerErrorException,
   Logger,
   OnModuleDestroy,
   OnModuleInit,
@@ -12,6 +13,7 @@ import {
   Contract,
   AbiCoder,
   HDNodeWallet,
+  verifyTypedData,
 } from 'ethers';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -63,58 +65,241 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
 
   generateWallet(): HDNodeWallet {
     try {
-      const wallet = Wallet.createRandom();
-
-      return wallet;
+      return Wallet.createRandom();
     } catch (error) {
       this.logger.error(error);
     }
   }
 
-  async addCreditor(
+  /**
+   * ✅ Generate EIP-712 Domain
+   */
+  private async getEIP712Domain() {
+    const network = await this.provider.getNetwork();
+    return {
+      name: 'DataSharing',
+      version: '1',
+      chainId: network.chainId,
+      verifyingContract: this.contract.target.toString(),
+    };
+  }
+
+  /**
+   * ✅ Sign MetaTransaction using EIP-712
+   */
+  private async signMetaTransaction(
+    from: string,
+    functionCall: string,
+  ): Promise<{
+    message: { from: string; nonce: bigint; functionCall: string };
+    signature: string;
+  }> {
+    const nonce = BigInt(await this.contract.nonces(from));
+    const domain = await this.getEIP712Domain();
+
+    const message = {
+      from,
+      nonce,
+      functionCall,
+    };
+
+    const signature = await this.wallet.signTypedData(
+      domain,
+      {
+        MetaTransaction: [
+          { name: 'from', type: 'address' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'functionCall', type: 'bytes' },
+        ],
+      },
+      message,
+    );
+
+    return { message, signature };
+  }
+
+  /**
+   * ✅ Execute MetaTransaction with EIP-712 Signature
+   */
+  private async executeMetaTransaction(
+    signerAddress: string,
+    functionCall: string,
+  ) {
+    try {
+      const { signature, message } = await this.signMetaTransaction(
+        signerAddress,
+        functionCall,
+      );
+
+      // ✅ Verify signature before execution
+      const domain = await this.getEIP712Domain();
+      const recoveredSigner = verifyTypedData(
+        domain,
+        {
+          MetaTransaction: [
+            { name: 'from', type: 'address' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'functionCall', type: 'bytes' },
+          ],
+        },
+        message,
+        signature,
+      );
+
+      if (recoveredSigner !== signerAddress) {
+        throw new InternalServerErrorException(
+          'Invalid EIP-712 Signature: Signer does not match!',
+        );
+      }
+
+      // ✅ Execute MetaTransaction on contract
+      const tx = await this.contract.executeMetaTransaction(
+        message.from,
+        message.nonce,
+        message.functionCall,
+        signature,
+      );
+
+      return await tx.wait();
+    } catch (error) {
+      this.logger.error(`Meta Transaction Error: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * ✅ Add Creditor using MetaTransaction
+   */
+  async addCreditor(creditor_code: string, creditor_address: `0x${string}`) {
+    try {
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'addCreditor(bytes32,address)',
+        [
+          keccak256(abiCoder.encode(['string'], [creditor_code])),
+          creditor_address,
+        ],
+      );
+
+      return await this.executeMetaTransaction(
+        this.wallet.address,
+        functionCall,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  /**
+   * ✅ Add Creditor with event emit triggered using MetaTransaction
+   */
+  async addCreditorWithEvent(
     creditor_code: string,
     creditor_name: string,
     creditor_address: `0x${string}`,
+    institution_code: string,
+    institution_name: string,
+    approval_date: string,
+    signer_name: string,
+    signer_position: string,
   ) {
     try {
-      const abiCoder = new AbiCoder();
-      const tx = await this.contract.addCreditor(
-        keccak256(abiCoder.encode(['string'], [creditor_code])),
-        keccak256(abiCoder.encode(['string'], [creditor_name])),
-        creditor_address,
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'addCreditor(address,bytes32,string,string,string,string,string)',
+        [
+          creditor_address,
+          keccak256(abiCoder.encode(['string'], [creditor_code])),
+          creditor_name,
+          institution_code,
+          institution_name,
+          approval_date,
+          signer_name,
+          signer_position,
+        ],
       );
-      await tx.wait();
 
-      return tx.hash;
+      return await this.executeMetaTransaction(
+        this.wallet.address,
+        functionCall,
+      );
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
+  /**
+   * ✅ Add Debtor using MetaTransaction
+   */
   async addDebtor(nik: string, debtor_address: `0x${string}`) {
     try {
-      const abiCoder = new AbiCoder();
-      const tx = await this.contract.addDebtor(
-        keccak256(abiCoder.encode(['string'], [nik])),
-        debtor_address,
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'addDebtor(bytes32,address)',
+        [keccak256(abiCoder.encode(['string'], [nik])), debtor_address],
       );
 
-      await tx.wait();
-
-      return tx.hash;
+      return await this.executeMetaTransaction(
+        this.wallet.address,
+        functionCall,
+      );
     } catch (error) {
       this.logger.error(error);
+      throw error;
+    }
+  }
+
+  /**
+   * ✅ Remove creditor using MetaTransaction
+   */
+  async removeCreditor(creditor_code: string) {
+    try {
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'removeCreditor(bytes32)',
+        keccak256(abiCoder.encode(['string'], [creditor_code])),
+      );
+
+      return await this.executeMetaTransaction(
+        this.wallet.address,
+        functionCall,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  /**
+   * ✅ Remove debtor using MetaTransaction
+   */
+  async removeDebtor(nik: string) {
+    try {
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'removeDebtor(bytes32)',
+        keccak256(abiCoder.encode(['string'], [nik])),
+      );
+
+      return await this.executeMetaTransaction(
+        this.wallet.address,
+        functionCall,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
     }
   }
 
   async getLogData(nik: string) {
     try {
-      const tx = await this.contract.getDebtorDataActiveCreditors(
+      const dataLog = await this.contract.getDebtorDataActiveCreditors(
         keccak256(nik),
       );
 
-      await tx.wait();
-      return tx;
+      return dataLog;
     } catch (error) {
       this.logger.error(error);
     }
@@ -122,57 +307,104 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
 
   async getStatusRequest(nik: string, creditor_code: string) {
     try {
-      const tx = await this.contract.getStatusRequest(
+      const status = await this.contract.getStatusRequest(
         keccak256(nik),
         keccak256(creditor_code),
       );
 
-      await tx.wait();
-      return tx;
+      return status;
     } catch (error) {
       this.logger.error(error);
     }
   }
 
+  /**
+   * ✅ Request Delegation using MetaTransaction
+   */
   async requestDelegation(
+    consumer_address: `0x${string}`,
     nik: string,
     consumer_code: string,
     provider_code: string,
   ) {
     try {
-      const tx = await this.contract.requestDelegation(
-        keccak256(nik),
-        keccak256(consumer_code),
-        keccak256(provider_code),
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'requestDelegation(bytes32,bytes32,bytes32)',
+        [
+          keccak256(abiCoder.encode(['string'], [nik])),
+          keccak256(abiCoder.encode(['string'], [consumer_code])),
+          keccak256(abiCoder.encode(['string'], [provider_code])),
+        ],
       );
 
-      await tx.wait();
-
-      return tx;
+      return await this.executeMetaTransaction(consumer_address, functionCall);
     } catch (error) {
       this.logger.error(error);
     }
   }
 
+  /**
+   * ✅ Request Delegation using MetaTransaction
+   */
+  async requestDelegationWithEvent(
+    consumer_address: `0x${string}`,
+    nik: string,
+    consumer_code: string,
+    provider_code: string,
+    request_id: string,
+    transaction_id: string,
+    referenced_id: string,
+    request_data: string,
+  ) {
+    try {
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'requestDelegation(bytes32,bytes32,bytes32,string,string,string,string)',
+        [
+          keccak256(abiCoder.encode(['string'], [nik])),
+          keccak256(abiCoder.encode(['string'], [consumer_code])),
+          keccak256(abiCoder.encode(['string'], [provider_code])),
+          request_id,
+          transaction_id,
+          referenced_id,
+          request_data,
+        ],
+      );
+
+      return await this.executeMetaTransaction(consumer_address, functionCall);
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  /**
+   * ✅ Approve Delegation using MetaTransaction
+   */
   async approveDelegation(
+    provider_address: `0x${string}`,
     customer_nik: string,
     consumer: string,
     provider: string,
     is_approve: IsApprove,
   ) {
     try {
-      const tx = await this.contract.delegate(
-        keccak256(customer_nik),
-        keccak256(consumer),
-        keccak256(provider),
-        is_approve,
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'delegate(bytes32,bytes32,bytes32,uint8)',
+        [
+          keccak256(abiCoder.encode(['string'], [customer_nik])),
+          keccak256(abiCoder.encode(['string'], [consumer])),
+          keccak256(abiCoder.encode(['string'], [provider])),
+          is_approve,
+        ],
       );
 
-      await tx.wait();
-
-      return tx;
+      return await this.executeMetaTransaction(provider_address, functionCall);
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -189,6 +421,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   }
 
   async purchasePackage(
+    creditor_address: `0x${string}`,
     institution_code: string,
     purchase_date: string,
     invoice_number: string,
@@ -199,25 +432,29 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     quota: number,
   ) {
     try {
-      const tx = await this.contract.purchasePackage(
-        institution_code,
-        purchase_date,
-        invoice_number,
-        package_id,
-        quantity,
-        start_date,
-        end_date,
-        quota,
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'purchasePackage(string,string,string,uint256,uint256,string,string,uint256)',
+        [
+          institution_code,
+          purchase_date,
+          invoice_number,
+          package_id,
+          quantity,
+          start_date,
+          end_date,
+          quota,
+        ],
       );
-      await tx.wait();
 
-      return tx;
+      return await this.executeMetaTransaction(creditor_address, functionCall);
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
   async addDebtorToCreditor(
+    creditor_address: `0x${string}`,
     debtor_nik: string,
     creditor_code: string,
     name: string,
@@ -228,35 +465,25 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     url_approval: string,
   ) {
     try {
-      const tx = await this.contract.addDebtorToCreditor(
-        debtor_nik,
-        creditor_code,
-        name,
-        creditor_name,
-        application_date,
-        approval_date,
-        url_KTP,
-        url_approval,
+      const abiCoder = AbiCoder.defaultAbiCoder();
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'addDebtorToCreditor(bytes32,bytes32,string,string,string,string,string,string)',
+        [
+          keccak256(abiCoder.encode(['string'], [debtor_nik])),
+          keccak256(abiCoder.encode(['string'], [creditor_code])),
+          name,
+          creditor_name,
+          application_date,
+          approval_date,
+          url_KTP,
+          url_approval,
+        ],
       );
 
-      const receipt = tx.wait();
-      const event = receipt.events?.find(
-        (e: { event: string }) => e.event === 'DebtorAddedWithMetadata',
-      );
-
-      return {
-        debtor_nik: event.args.nik,
-        creditor_code: event.args.creditorCode,
-        name: event.args.name,
-        creditor_name: event.args.creditorName,
-        application_date: event.args.applicationDate,
-        approval_date: event.args.approvalDate,
-        url_KTP: event.args.urlKTP,
-        url_approval: event.args.urlApproval,
-        tx_hash: receipt.hash,
-      };
+      return await this.executeMetaTransaction(creditor_address, functionCall);
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 }
