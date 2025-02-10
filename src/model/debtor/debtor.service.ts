@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IDebtorService } from './util/debtor.service.interface';
 import { EthersService } from 'src/providers/ethers/ethers';
-import { RegistrationServiceType } from './util/debtor-type.service';
+import {
+  RegistrationServiceType,
+  RemoveDebtorType,
+} from './util/debtor-type.service';
 import { LogActivityType } from './util/debtor-type.service';
 import { VaultService } from 'src/providers/vault/vault';
 import { TypeKey, WalletAddressType } from 'src/utils/type/type';
@@ -46,7 +49,6 @@ export class DebtorService implements IDebtorService {
       );
 
       const secret = this.configService.get<string>('VAULT_SECRET');
-      console.log('secrets: ', secret);
       const { encryptedData } = encrypt(privateKey, secret);
 
       await this.vaultService.storePrivateKey(
@@ -55,9 +57,23 @@ export class DebtorService implements IDebtorService {
         TypeKey.DEBTOR,
       );
 
-      return { wallet_address: address, tx_hash };
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx_hash.hash}`;
+
+      return { wallet_address: address, tx_hash: tx_hash.hash, onchain_url };
     } catch (error) {
-      console.log(error);
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  async removeDebtor(nik: string): Promise<RemoveDebtorType> {
+    try {
+      const tx = await this.ethersService.removeDebtor(nik);
+
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx.hash}`;
+
+      return { tx_hash: tx.hash, onchain_url };
+    } catch (error) {
       this.logger.error(error);
       throw error;
     }
