@@ -3,15 +3,22 @@ import {
   AddDebtorToCreditorType,
   CreateDelegationType,
   DelegationApprovalType,
+  PurcahsePackageType,
   RegistrationServiceType,
 } from './creditor-type.service';
 
 export interface ICreditorService {
   registration(
     creditor_code: string,
-    creditor_name: string,
+    creditor_name?: string,
+    institution_code?: string,
+    institution_name?: string,
+    approval_date?: string,
+    signer_name?: string,
+    signer_position?: string,
   ): Promise<RegistrationServiceType>;
   delegationApproval(
+    provider_address: `0x${string}`,
     nik: string,
     is_approve: boolean,
     consumer_code: string,
@@ -22,11 +29,17 @@ export interface ICreditorService {
     creditor_wallet_address: WalletAddressType,
   ): Promise<TransactionType>;
   createDelegation(
+    consumer_address: `0x${string}`,
     nik: string,
     consumer_code: string,
     provider_code: string,
+    request_id?: string,
+    transaction_id?: string,
+    referenced_id?: string,
+    request_data?: string,
   ): Promise<CreateDelegationType>;
   addDebtorToCreditor(
+    creditor_address: `0x${string}`,
     debtor_nik: string,
     creditor_code: string,
     name: string,
@@ -36,4 +49,15 @@ export interface ICreditorService {
     url_KTP: string,
     url_approval: string,
   ): Promise<AddDebtorToCreditorType>;
+  purchasePackage(
+    creditor_address: `0x${string}`,
+    institution_code: string,
+    purchase_date: string,
+    invoice_number: string,
+    package_id: number,
+    quantity: number,
+    start_date: string,
+    end_date: string,
+    quota: number,
+  ): Promise<PurcahsePackageType>;
 }
