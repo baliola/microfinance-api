@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Post } from '@nestjs/common';
 import { ICreditorService } from './util/creditor.service.interface';
 import {
   TransactionResponseType,
@@ -10,7 +10,9 @@ import {
   AddDebtorToCreditorType,
   CreateDelegationType,
   DelegationApprovalType,
+  PurcahsePackageType,
   RegistrationServiceType,
+  RemoveCreditorType,
 } from './util/creditor-type.service';
 import { VaultService } from 'src/providers/vault/vault';
 import { ConfigService } from '@nestjs/config';
@@ -26,15 +28,41 @@ export class CreditorService implements ICreditorService {
 
   async registration(
     creditor_code: string,
-    creditor_name: string,
+    creditor_name?: string,
+    institution_code?: string,
+    institution_name?: string,
+    approval_date?: string,
+    signer_name?: string,
+    signer_position?: string,
   ): Promise<RegistrationServiceType> {
     try {
       const { address, privateKey } = this.ethersService.generateWallet();
-      const tx_hash = await this.ethersService.addCreditor(
-        creditor_code,
-        creditor_name,
-        address as `0x${string}`,
-      );
+
+      let tx_hash: any;
+      if (
+        creditor_name &&
+        institution_code &&
+        institution_name &&
+        approval_date &&
+        signer_name &&
+        signer_position
+      ) {
+        tx_hash = await this.ethersService.addCreditorWithEvent(
+          creditor_code,
+          creditor_name,
+          address as `0x${string}`,
+          institution_code,
+          institution_name,
+          approval_date,
+          signer_name,
+          signer_position,
+        );
+      } else {
+        tx_hash = await this.ethersService.addCreditor(
+          creditor_code,
+          address as `0x${string}`,
+        );
+      }
 
       const secret = this.configService.get<string>('VAULT_SECRET');
 
@@ -45,8 +73,9 @@ export class CreditorService implements ICreditorService {
         address as `0x${string}`,
         TypeKey.CREDITOR,
       );
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx_hash.hash}`;
 
-      return { wallet_address: address, tx_hash };
+      return { wallet_address: address, tx_hash: tx_hash.hash, onchain_url };
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -54,6 +83,7 @@ export class CreditorService implements ICreditorService {
   }
 
   async delegationApproval(
+    provider_address: `0x${string}`,
     nik: string,
     is_approve: boolean,
     consumer_code: string,
@@ -62,8 +92,9 @@ export class CreditorService implements ICreditorService {
     try {
       let tx_hash: any;
       let status: TransactionResponseType;
-      if (is_approve) {
+      if (is_approve && is_approve === true) {
         tx_hash = await this.ethersService.approveDelegation(
+          provider_address,
           nik,
           consumer_code,
           provider_code,
@@ -73,6 +104,7 @@ export class CreditorService implements ICreditorService {
         status = 'APPROVED';
       } else {
         tx_hash = await this.ethersService.approveDelegation(
+          provider_address,
           nik,
           consumer_code,
           provider_code,
@@ -81,7 +113,9 @@ export class CreditorService implements ICreditorService {
         status = 'REJECTED';
       }
 
-      return { tx_hash, status };
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx_hash.hash}`;
+
+      return { tx_hash: tx_hash.hash, status, onchain_url };
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -103,18 +137,50 @@ export class CreditorService implements ICreditorService {
   }
 
   async createDelegation(
+    consumer_address: `0x${string}`,
     nik: string,
     consumer_code: string,
     provider_code: string,
+    request_id?: string,
+    transaction_id?: string,
+    referenced_id?: string,
+    request_data?: string,
   ): Promise<CreateDelegationType> {
     try {
-      const tx = await this.ethersService.requestDelegation(
-        nik,
-        consumer_code,
-        provider_code,
-      );
+      let tx: any;
+      if (request_id && transaction_id && referenced_id && request_data) {
+        tx = await this.ethersService.requestDelegationWithEvent(
+          consumer_address,
+          nik,
+          consumer_code,
+          provider_code,
+          request_id,
+          transaction_id,
+          referenced_id,
+          request_data,
+        );
+      } else {
+        tx = await this.ethersService.requestDelegation(
+          consumer_address,
+          nik,
+          consumer_code,
+          provider_code,
+        );
+      }
 
-      return tx;
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx.hash}`;
+
+      return {
+        nik: tx.nik,
+        request_id: tx.request_id,
+        consumer_code: tx.consumer_code,
+        provider_code: tx.provider_code,
+        transaction_id: tx.transaction_id,
+        reference_id: tx.reference_id,
+        request_date: tx.request_date,
+        tx_hash: tx.hash,
+        onchain_url,
+      };
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -122,6 +188,7 @@ export class CreditorService implements ICreditorService {
   }
 
   async addDebtorToCreditor(
+    creditor_address: `0x${string}`,
     debtor_nik: string,
     creditor_code: string,
     name: string,
@@ -132,7 +199,8 @@ export class CreditorService implements ICreditorService {
     url_approval: string,
   ): Promise<AddDebtorToCreditorType> {
     try {
-      const tx = this.ethersService.addDebtorToCreditor(
+      const tx = await this.ethersService.addDebtorToCreditor(
+        creditor_address,
         debtor_nik,
         creditor_code,
         name,
@@ -143,7 +211,65 @@ export class CreditorService implements ICreditorService {
         url_approval,
       );
 
-      return tx;
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx.hash}`;
+
+      return {
+        debtor_nik: tx.nik,
+        creditor_code: tx.creditor_code,
+        name: tx.name,
+        creditor_name: tx.creditor_name,
+        application_date: tx.application_date,
+        approval_date: tx.approval_date,
+        url_KTP: tx.url_ktp,
+        url_approval: tx.url_approval,
+        tx_hash: tx.hash,
+        onchain_url,
+      };
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  async removeCreditor(creditor_code: string): Promise<RemoveCreditorType> {
+    try {
+      const tx = await this.ethersService.removeCreditor(creditor_code);
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx.hash}`;
+
+      return { tx_hash: tx.hash, onchain_url };
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  @Post('purchase-package')
+  async purchasePackage(
+    creditor_address: `0x${string}`,
+    institution_code: string,
+    purchase_date: string,
+    invoice_number: string,
+    package_id: number,
+    quantity: number,
+    start_date: string,
+    end_date: string,
+    quota: number,
+  ): Promise<PurcahsePackageType> {
+    try {
+      const tx_hash = await this.ethersService.purchasePackage(
+        creditor_address,
+        institution_code,
+        purchase_date,
+        invoice_number,
+        package_id,
+        quantity,
+        start_date,
+        end_date,
+        quota,
+      );
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx_hash.hash}`;
+
+      return { tx_hash: tx_hash.hash, onchain_url };
     } catch (error) {
       this.logger.error(error);
       throw error;

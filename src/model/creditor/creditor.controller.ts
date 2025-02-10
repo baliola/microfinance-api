@@ -20,6 +20,10 @@ import { WrapperResponseDTO } from '../../common/helper/response';
 import { RegistrationCreditorDTO } from './dto/registration.dto';
 import { AddDebtorToCreditorDTO } from './dto/add-debtor-to-creditor.dto';
 import { AddDebtorToCreditorResponseDTO } from './dto/response/add-debtor-to-creditor-res.dto';
+import { RemoveCreditorDTO } from './dto/remove-creditor.dto';
+import { RemoveCreditorResponseDTO } from './dto/response/remove-creditor-res.dto';
+import { PurchasePackageDTO } from './dto/purchase-package.dto';
+import { PurchasePackageResponseDTO } from './dto/response/purchase-package-res.dto';
 
 @Controller('/api/creditor')
 export class CreditorController {
@@ -59,14 +63,11 @@ export class CreditorController {
       },
     },
   })
-  @Post('/creditor-delegation')
+  @Post('creditor-delegation')
   async reqCreditorDelegation(
     @Body() dto: ReqCreditorDelegationDTO,
   ): Promise<WrapperResponseDTO<ReqDelegationResponseDTO>> {
     try {
-      const { debtor_nik, creditor_consumer_code, creditor_provider_code } =
-        dto;
-
       const {
         nik,
         request_id,
@@ -76,10 +77,16 @@ export class CreditorController {
         reference_id,
         request_date,
         tx_hash,
+        onchain_url,
       } = await this.creditorService.createDelegation(
-        debtor_nik,
-        creditor_consumer_code,
-        creditor_provider_code,
+        dto.consumer_address,
+        dto.debtor_nik,
+        dto.creditor_consumer_code,
+        dto.creditor_provider_code,
+        dto.request_id,
+        dto.transaction_id,
+        dto.reference_id,
+        dto.request_data,
       );
 
       const response: ReqDelegationResponseDTO = {
@@ -91,6 +98,7 @@ export class CreditorController {
         reference_id,
         request_date,
         tx_hash: tx_hash as `0x${string}`,
+        onchain_url,
       };
 
       return new WrapperResponseDTO(
@@ -162,7 +170,7 @@ export class CreditorController {
       },
     },
   })
-  @Get('/creditor-delegation/status')
+  @Get('creditor-delegation/status')
   @ApiQuery({
     name: 'nik',
     required: true,
@@ -233,7 +241,8 @@ export class CreditorController {
         value: {
           data: {
             status: 'APPROVED',
-            transaction_hash: '0x123abc...',
+            tx_hash: '0x123abc...',
+            onchain_url: '...',
           },
           message: 'Delegation has been accepted.',
         },
@@ -243,7 +252,8 @@ export class CreditorController {
         value: {
           data: {
             status: 'REJECTED',
-            transaction_hash: '0x123abc...',
+            tx_hash: '0x123abc...',
+            onchain_url: '...',
           },
           message: 'Delegation has been rejected.',
         },
@@ -259,28 +269,32 @@ export class CreditorController {
       },
     },
   })
-  @Post('/delegation-approval')
+  @Post('delegation-approval')
   async delegationApproval(
     @Body() dto: DelegationApprovalDTO,
   ): Promise<WrapperResponseDTO<DelegationApprovalResponseDTO>> {
     try {
       const {
+        provider_address,
         debtor_nik,
         is_approve,
         creditor_consumer_code,
         creditor_provider_code,
       } = dto;
 
-      const { tx_hash, status } = await this.creditorService.delegationApproval(
-        debtor_nik,
-        is_approve,
-        creditor_consumer_code,
-        creditor_provider_code,
-      );
+      const { tx_hash, status, onchain_url } =
+        await this.creditorService.delegationApproval(
+          provider_address,
+          debtor_nik,
+          is_approve,
+          creditor_consumer_code,
+          creditor_provider_code,
+        );
 
       const response: DelegationApprovalResponseDTO = {
         status,
-        transaction_hash: tx_hash,
+        tx_hash,
+        onchain_url,
       };
       this.logger.log('Request success.');
       return new WrapperResponseDTO(response, 'Delegation has been accepted.');
@@ -295,7 +309,7 @@ export class CreditorController {
     summary: 'Registration Creditor',
     description: 'Registration for creating wallet addresses for creditors.',
   })
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     description: 'Registration creditors success.',
     schema: {
       allOf: [
@@ -326,13 +340,30 @@ export class CreditorController {
     @Body() dto: RegistrationCreditorDTO,
   ): Promise<WrapperResponseDTO<RegistrationCreditorResponseDTO>> {
     try {
-      const { creditor_code, creditor_name } = dto;
-      const { wallet_address, tx_hash } =
-        await this.creditorService.registration(creditor_code, creditor_name);
+      const {
+        creditor_code,
+        creditor_name,
+        institution_code,
+        institution_name,
+        approval_date,
+        signer_name,
+        signer_position,
+      } = dto;
+      const { wallet_address, tx_hash, onchain_url } =
+        await this.creditorService.registration(
+          creditor_code,
+          creditor_name,
+          institution_code,
+          institution_name,
+          approval_date,
+          signer_name,
+          signer_position,
+        );
 
       const response: RegistrationCreditorResponseDTO = {
         wallet_address: wallet_address as `0x${string}`,
-        tx_hash,
+        tx_hash: tx_hash as `0x${string}`,
+        onchain_url,
       };
       return new WrapperResponseDTO(response, 'Creditor registration success.');
     } catch (error) {
@@ -380,41 +411,167 @@ export class CreditorController {
       const {
         debtor_nik,
         creditor_code,
-        debtor_name,
+        name,
         creditor_name,
         application_date,
         approval_date,
         url_KTP,
         url_approval,
-      } = dto;
-
-      const data = await this.creditorService.addDebtorToCreditor(
-        debtor_nik,
-        creditor_code,
-        debtor_name,
-        creditor_name,
-        application_date,
-        approval_date,
-        url_KTP,
-        url_approval,
+        tx_hash,
+        onchain_url,
+      } = await this.creditorService.addDebtorToCreditor(
+        dto.creditor_address,
+        dto.debtor_nik,
+        dto.creditor_code,
+        dto.debtor_name,
+        dto.creditor_name,
+        dto.application_date,
+        dto.approval_date,
+        dto.url_KTP,
+        dto.url_approval,
       );
 
       const response: AddDebtorToCreditorResponseDTO = {
-        debtor_nik: data.debtor_nik,
-        creditor_code: data.creditor_code,
-        name: data.name,
-        creditor_name: data.creditor_name,
-        application_date: data.application_date,
-        approval_date: data.approval_date,
-        url_KTP: data.url_KTP,
-        url_approval: data.url_approval,
-        tx_hash: data.tx_hash as `0x${string}`,
+        debtor_nik,
+        creditor_code,
+        name,
+        creditor_name,
+        application_date,
+        approval_date,
+        url_KTP,
+        url_approval,
+        tx_hash: tx_hash as `0x${string}`,
+        onchain_url,
       };
 
       return new WrapperResponseDTO(
         response,
         'Success add Debtor into Creditor.',
       );
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  @ApiExtraModels(WrapperResponseDTO, RemoveCreditorResponseDTO)
+  @ApiOperation({
+    summary: 'Remove Creditor',
+    description: 'Removing creditor from blockchain.',
+  })
+  @ApiOkResponse({
+    description: 'Removing creditor success.',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(WrapperResponseDTO) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(RemoveCreditorResponseDTO) },
+            message: {
+              type: 'string',
+              example: 'Removing Creditor success.',
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation Error.',
+    schema: {
+      example: {
+        data: null,
+        messsage: 'Validation Error.',
+      },
+    },
+  })
+  @Post('remove-creditor')
+  async removeCreditor(
+    @Body() dto: RemoveCreditorDTO,
+  ): Promise<WrapperResponseDTO<RemoveCreditorResponseDTO>> {
+    try {
+      const { creditor_code } = dto;
+
+      const { tx_hash, onchain_url } =
+        await this.creditorService.removeCreditor(creditor_code);
+
+      const data: RemoveCreditorResponseDTO = {
+        tx_hash: tx_hash as `0x${string}`,
+        onchain_url,
+      };
+      return new WrapperResponseDTO(data, 'Removing Creditor success.');
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  @ApiExtraModels(WrapperResponseDTO, PurchasePackageResponseDTO)
+  @ApiOperation({
+    summary: 'Purchase Package',
+    description: 'Purchase Quota Package.',
+  })
+  @ApiOkResponse({
+    description: 'Purchasing Package success.',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(WrapperResponseDTO) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(PurchasePackageResponseDTO) },
+            message: {
+              type: 'string',
+              example: 'Purchasing Package success.',
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation Error.',
+    schema: {
+      example: {
+        data: null,
+        messsage: 'Validation Error.',
+      },
+    },
+  })
+  @Post('purchase-package')
+  async purchasePackage(
+    @Body() dto: PurchasePackageDTO,
+  ): Promise<WrapperResponseDTO<PurchasePackageResponseDTO>> {
+    try {
+      const {
+        creditor_address,
+        institution_code,
+        purchase_date,
+        invoice_number,
+        package_id,
+        quantity,
+        start_date,
+        end_date,
+        quota,
+      } = dto;
+
+      const { tx_hash } = await this.creditorService.purchasePackage(
+        creditor_address,
+        institution_code,
+        purchase_date,
+        invoice_number,
+        package_id,
+        quantity,
+        start_date,
+        end_date,
+        quota,
+      );
+
+      const response: PurchasePackageResponseDTO = {
+        tx_hash: tx_hash as `0x${string}`,
+        onchain_url: tx_hash,
+      };
+
+      return new WrapperResponseDTO(response, 'Purchasing Package success.');
     } catch (error) {
       this.logger.error(error);
       throw error;
