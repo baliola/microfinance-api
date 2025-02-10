@@ -13,4 +13,10 @@ export class RegistrationDebtorResponseDTO {
     example: '0x...',
   })
   tx_hash: WalletAddressType;
+
+  @ApiProperty({
+    description: 'Base URL for the Onchain Registry API.',
+    example: '...',
+  })
+  onchain_url: string;
 }
