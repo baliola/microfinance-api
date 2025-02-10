@@ -12,5 +12,11 @@ export class RegistrationCreditorResponseDTO {
     description: 'Transaction hash.',
     example: '...',
   })
-  tx_hash: string;
+  tx_hash: `0x${string}`;
+
+  @ApiProperty({
+    description: 'Base URL for the Onchain Registry API.',
+    example: '...',
+  })
+  onchain_url: string;
 }

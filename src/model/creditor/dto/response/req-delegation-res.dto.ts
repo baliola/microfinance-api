@@ -48,4 +48,10 @@ export class ReqDelegationResponseDTO {
     example: '0x123abc...',
   })
   tx_hash: `0x${string}`;
+
+  @ApiProperty({
+    description: 'Base URL for the Onchain Registry API.',
+    example: '...',
+  })
+  onchain_url: string;
 }
