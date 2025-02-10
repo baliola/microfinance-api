@@ -114,10 +114,13 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   /**
    * ✅ Execute MetaTransaction with EIP-712 Signature
    */
-  private async executeMetaTransaction(from: string, functionCall: string) {
+  private async executeMetaTransaction(
+    signerAddress: string,
+    functionCall: string,
+  ) {
     try {
       const { message, signature } = await this.signMetaTransaction(
-        from,
+        signerAddress,
         functionCall,
       );
 
@@ -136,7 +139,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         signature,
       );
 
-      if (recoveredSigner !== from) {
+      if (recoveredSigner !== signerAddress) {
         throw new Error('Invalid EIP-712 Signature: Signer does not match!');
       }
 
@@ -278,6 +281,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Request Delegation using MetaTransaction
    */
   async requestDelegation(
+    consumer_address: `0x${string}`,
     nik: string,
     consumer_code: string,
     provider_code: string,
@@ -293,10 +297,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(consumer_address, functionCall);
     } catch (error) {
       this.logger.error(error);
     }
@@ -306,6 +307,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Request Delegation with event emit triggered using MetaTransaction
    */
   async requestDelegationWithEvent(
+    consumer_address: `0x${string}`,
     nik: string,
     consumer_code: string,
     provider_code: string,
@@ -329,10 +331,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(consumer_address, functionCall);
     } catch (error) {
       this.logger.error(error);
     }
@@ -342,6 +341,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Approve Delegation using MetaTransaction
    */
   async approveDelegation(
+    provider_address: `0x${string}`,
     customer_nik: string,
     consumer: string,
     provider: string,
@@ -359,10 +359,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(provider_address, functionCall);
     } catch (error) {
       this.logger.error(error);
     }
@@ -372,6 +369,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Add debtor as active user from creditor using MetaTransaction
    */
   async addDebtorToCreditor(
+    creditor_address: `0x${string}`,
     nik: string,
     creditor_code: string,
     name: string,
@@ -397,10 +395,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(creditor_address, functionCall);
     } catch (error) {
       this.logger.error(error);
     }
@@ -456,6 +451,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Sending data for purchase using MetaTransaction
    */
   async purchasePackage(
+    creditor_address: `0x${string}`,
     institution_code: string,
     purchase_date: string,
     invoice_number: string,
@@ -480,10 +476,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(creditor_address, functionCall);
     } catch (error) {
       this.logger.error(error);
     }
