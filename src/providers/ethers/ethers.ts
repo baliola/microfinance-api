@@ -18,17 +18,22 @@ import {
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { IsApprove } from 'src/model/creditor/util/creditor-type.service';
+import { VaultService } from '../vault/vault';
 
 @Injectable()
 export class EthersService implements OnModuleInit, OnModuleDestroy {
   private provider: JsonRpcProvider;
   private wallet: Wallet;
-  private contract: any;
+  private contract: Contract;
+  private readonly abiCoder = AbiCoder.defaultAbiCoder();
 
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: Logger,
-  ) {}
+    private vault: VaultService,
+  ) {
+    this.onModuleInit();
+  }
 
   onModuleInit() {
     const rpcUrl = this.configService.get<string>('RPC_URL');
@@ -59,15 +64,28 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy() {
+    if (this.provider) {
+      this.provider.destroy();
+    }
     this.provider = null;
     this.wallet = null;
   }
 
-  generateWallet(): HDNodeWallet {
+  generateWallet(): HDNodeWallet | null {
     try {
       return Wallet.createRandom();
-    } catch (error) {
-      this.logger.error(error);
+    } catch (error: any) {
+      this.logger.error(`Failed to generate wallet: ${error.message}`);
+      throw null;
+    }
+  }
+
+  generateWalletWithPrivateKey(private_key: string): Wallet | null {
+    try {
+      return new Wallet(private_key);
+    } catch (error: any) {
+      this.logger.error(`Failed to generate wallet: ${error.message}`);
+      return null;
     }
   }
 
@@ -87,7 +105,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   /**
    * ✅ Sign MetaTransaction using EIP-712
    */
-  private async signMetaTransaction(
+  protected async signMetaTransaction(
     from: string,
     functionCall: string,
   ): Promise<{
@@ -161,8 +179,10 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       );
 
       return await tx.wait();
-    } catch (error) {
-      this.logger.error(`Meta Transaction Error: ${error}`);
+    } catch (error: any) {
+      this.logger.error(
+        `Meta Transaction Error for ${signerAddress}: ${error.message}`,
+      );
       throw error;
     }
   }
@@ -172,11 +192,10 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    */
   async addCreditor(creditor_code: string, creditor_address: `0x${string}`) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'addCreditor(bytes32,address)',
         [
-          keccak256(abiCoder.encode(['string'], [creditor_code])),
+          keccak256(this.abiCoder.encode(['string'], [creditor_code])),
           creditor_address,
         ],
       );
@@ -185,9 +204,10 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         this.wallet.address,
         functionCall,
       );
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
+    } catch (error: any) {
+      const decodedError = this.contract.interface.parseError(error.data);
+      this.logger.error(decodedError);
+      throw decodedError;
     }
   }
 
@@ -196,7 +216,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    */
   async addCreditorWithEvent(
     creditor_code: string,
-    creditor_name: string,
     creditor_address: `0x${string}`,
     institution_code: string,
     institution_name: string,
@@ -205,13 +224,11 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     signer_position: string,
   ) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'addCreditor(address,bytes32,string,string,string,string,string)',
         [
           creditor_address,
-          keccak256(abiCoder.encode(['string'], [creditor_code])),
-          creditor_name,
+          keccak256(this.abiCoder.encode(['string'], [creditor_code])),
           institution_code,
           institution_name,
           approval_date,
@@ -235,10 +252,9 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    */
   async addDebtor(nik: string, debtor_address: `0x${string}`) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'addDebtor(bytes32,address)',
-        [keccak256(abiCoder.encode(['string'], [nik])), debtor_address],
+        [keccak256(this.abiCoder.encode(['string'], [nik])), debtor_address],
       );
 
       return await this.executeMetaTransaction(
@@ -256,10 +272,9 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    */
   async removeCreditor(creditor_code: string) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'removeCreditor(bytes32)',
-        keccak256(abiCoder.encode(['string'], [creditor_code])),
+        [keccak256(this.abiCoder.encode(['string'], [creditor_code]))],
       );
 
       return await this.executeMetaTransaction(
@@ -277,10 +292,9 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    */
   async removeDebtor(nik: string) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'removeDebtor(bytes32)',
-        keccak256(abiCoder.encode(['string'], [nik])),
+        [keccak256(this.abiCoder.encode(['string'], [nik]))],
       );
 
       return await this.executeMetaTransaction(
@@ -296,25 +310,29 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   async getLogData(nik: string) {
     try {
       const dataLog = await this.contract.getDebtorDataActiveCreditors(
-        keccak256(nik),
+        keccak256(this.abiCoder.encode(['string'], [nik])),
       );
 
       return dataLog;
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
   async getStatusRequest(nik: string, creditor_code: string) {
     try {
       const status = await this.contract.getStatusRequest(
-        keccak256(nik),
-        keccak256(creditor_code),
+        // keccak256(nik),
+        // keccak256(creditor_code),
+        keccak256(this.abiCoder.encode(['string'], [nik])),
+        keccak256(this.abiCoder.encode(['string'], [creditor_code])),
       );
 
       return status;
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -322,25 +340,26 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Request Delegation using MetaTransaction
    */
   async requestDelegation(
-    consumer_address: `0x${string}`,
+    consumer_address: string,
     nik: string,
     consumer_code: string,
     provider_code: string,
   ) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'requestDelegation(bytes32,bytes32,bytes32)',
         [
-          keccak256(abiCoder.encode(['string'], [nik])),
-          keccak256(abiCoder.encode(['string'], [consumer_code])),
-          keccak256(abiCoder.encode(['string'], [provider_code])),
+          keccak256(this.abiCoder.encode(['string'], [nik])),
+          keccak256(this.abiCoder.encode(['string'], [consumer_code])),
+          keccak256(this.abiCoder.encode(['string'], [provider_code])),
         ],
       );
 
       return await this.executeMetaTransaction(consumer_address, functionCall);
     } catch (error) {
+      console.log(error);
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -348,7 +367,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Request Delegation using MetaTransaction
    */
   async requestDelegationWithEvent(
-    consumer_address: `0x${string}`,
+    consumer_address: string,
     nik: string,
     consumer_code: string,
     provider_code: string,
@@ -358,13 +377,12 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     request_data: string,
   ) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'requestDelegation(bytes32,bytes32,bytes32,string,string,string,string)',
         [
-          keccak256(abiCoder.encode(['string'], [nik])),
-          keccak256(abiCoder.encode(['string'], [consumer_code])),
-          keccak256(abiCoder.encode(['string'], [provider_code])),
+          keccak256(this.abiCoder.encode(['string'], [nik])),
+          keccak256(this.abiCoder.encode(['string'], [consumer_code])),
+          keccak256(this.abiCoder.encode(['string'], [provider_code])),
           request_id,
           transaction_id,
           referenced_id,
@@ -390,13 +408,12 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     is_approve: IsApprove,
   ) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'delegate(bytes32,bytes32,bytes32,uint8)',
         [
-          keccak256(abiCoder.encode(['string'], [customer_nik])),
-          keccak256(abiCoder.encode(['string'], [consumer])),
-          keccak256(abiCoder.encode(['string'], [provider])),
+          keccak256(this.abiCoder.encode(['string'], [customer_nik])),
+          keccak256(this.abiCoder.encode(['string'], [consumer])),
+          keccak256(this.abiCoder.encode(['string'], [provider])),
           is_approve,
         ],
       );
@@ -411,7 +428,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   async getCreditor(creditor_code: string) {
     try {
       const creditorAddress = await this.contract.getCreditor(
-        keccak256(creditor_code),
+        keccak256(this.abiCoder.encode(['string'], [creditor_code])),
       );
 
       return creditorAddress;
@@ -454,10 +471,9 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   }
 
   async addDebtorToCreditor(
-    creditor_address: `0x${string}`,
     debtor_nik: string,
     creditor_code: string,
-    name: string,
+    debtor_name: string,
     creditor_name: string,
     application_date: string,
     approval_date: string,
@@ -465,13 +481,12 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     url_approval: string,
   ) {
     try {
-      const abiCoder = AbiCoder.defaultAbiCoder();
       const functionCall = this.contract.interface.encodeFunctionData(
         'addDebtorToCreditor(bytes32,bytes32,string,string,string,string,string,string)',
         [
-          keccak256(abiCoder.encode(['string'], [debtor_nik])),
-          keccak256(abiCoder.encode(['string'], [creditor_code])),
-          name,
+          keccak256(this.abiCoder.encode(['string'], [debtor_nik])),
+          keccak256(this.abiCoder.encode(['string'], [creditor_code])),
+          debtor_name,
           creditor_name,
           application_date,
           approval_date,
@@ -480,7 +495,10 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(creditor_address, functionCall);
+      return await this.executeMetaTransaction(
+        this.wallet.address,
+        functionCall,
+      );
     } catch (error) {
       this.logger.error(error);
       throw error;
