@@ -145,9 +145,10 @@ export class CreditorService implements ICreditorService {
     transaction_id?: string,
     referenced_id?: string,
     request_data?: string,
-  ): Promise<CreateDelegationType> {
+  ): Promise<CreateDelegationType> { 
     try {
       let tx: any;
+      // function untuk get private key dari vault
       if (request_id && transaction_id && referenced_id && request_data) {
         tx = await this.ethersService.requestDelegationWithEvent(
           consumer_address,
