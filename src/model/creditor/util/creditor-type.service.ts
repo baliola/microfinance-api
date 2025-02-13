@@ -42,7 +42,7 @@ export type RemoveCreditorType = {
   onchain_url: string;
 };
 
-export type PurcahsePackageType = {
+export type PurchasePackageType = {
   tx_hash: string;
   onchain_url: string;
 };
