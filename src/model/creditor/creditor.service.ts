@@ -1,4 +1,4 @@
-import { Injectable, Logger, Post } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ICreditorService } from './util/creditor.service.interface';
 import {
   TransactionResponseType,
@@ -10,7 +10,7 @@ import {
   AddDebtorToCreditorType,
   CreateDelegationType,
   DelegationApprovalType,
-  PurcahsePackageType,
+  PurchasePackageType,
   RegistrationServiceType,
   RemoveCreditorType,
 } from './util/creditor-type.service';
@@ -28,7 +28,6 @@ export class CreditorService implements ICreditorService {
 
   async registration(
     creditor_code: string,
-    creditor_name?: string,
     institution_code?: string,
     institution_name?: string,
     approval_date?: string,
@@ -40,7 +39,6 @@ export class CreditorService implements ICreditorService {
 
       let tx_hash: any;
       if (
-        creditor_name &&
         institution_code &&
         institution_name &&
         approval_date &&
@@ -49,7 +47,6 @@ export class CreditorService implements ICreditorService {
       ) {
         tx_hash = await this.ethersService.addCreditorWithEvent(
           creditor_code,
-          creditor_name,
           address as `0x${string}`,
           institution_code,
           institution_name,
@@ -92,9 +89,17 @@ export class CreditorService implements ICreditorService {
     try {
       let tx_hash: any;
       let status: TransactionResponseType;
+      const privateKey = await this.vaultService.readPrivateKey(
+        provider_address,
+        TypeKey.CREDITOR,
+      );
+
+      const provider_wallet =
+        this.ethersService.generateWalletWithPrivateKey(privateKey);
+
       if (is_approve && is_approve === true) {
         tx_hash = await this.ethersService.approveDelegation(
-          provider_address,
+          provider_wallet,
           nik,
           consumer_code,
           provider_code,
@@ -104,7 +109,7 @@ export class CreditorService implements ICreditorService {
         status = 'APPROVED';
       } else {
         tx_hash = await this.ethersService.approveDelegation(
-          provider_address,
+          provider_wallet,
           nik,
           consumer_code,
           provider_code,
@@ -145,13 +150,20 @@ export class CreditorService implements ICreditorService {
     transaction_id?: string,
     referenced_id?: string,
     request_data?: string,
-  ): Promise<CreateDelegationType> { 
+  ): Promise<CreateDelegationType> {
     try {
       let tx: any;
-      // function untuk get private key dari vault
+      const privateKey = await this.vaultService.readPrivateKey(
+        consumer_address,
+        TypeKey.CREDITOR,
+      );
+
+      const consumer_wallet =
+        this.ethersService.generateWalletWithPrivateKey(privateKey);
+
       if (request_id && transaction_id && referenced_id && request_data) {
         tx = await this.ethersService.requestDelegationWithEvent(
-          consumer_address,
+          consumer_wallet,
           nik,
           consumer_code,
           provider_code,
@@ -162,7 +174,7 @@ export class CreditorService implements ICreditorService {
         );
       } else {
         tx = await this.ethersService.requestDelegation(
-          consumer_address,
+          consumer_wallet,
           nik,
           consumer_code,
           provider_code,
@@ -189,7 +201,6 @@ export class CreditorService implements ICreditorService {
   }
 
   async addDebtorToCreditor(
-    creditor_address: `0x${string}`,
     debtor_nik: string,
     creditor_code: string,
     name: string,
@@ -201,7 +212,6 @@ export class CreditorService implements ICreditorService {
   ): Promise<AddDebtorToCreditorType> {
     try {
       const tx = await this.ethersService.addDebtorToCreditor(
-        creditor_address,
         debtor_nik,
         creditor_code,
         name,
@@ -244,7 +254,6 @@ export class CreditorService implements ICreditorService {
     }
   }
 
-  @Post('purchase-package')
   async purchasePackage(
     creditor_address: `0x${string}`,
     institution_code: string,
@@ -255,10 +264,18 @@ export class CreditorService implements ICreditorService {
     start_date: string,
     end_date: string,
     quota: number,
-  ): Promise<PurcahsePackageType> {
+  ): Promise<PurchasePackageType> {
     try {
-      const tx_hash = await this.ethersService.purchasePackage(
+      const privateKey = await this.vaultService.readPrivateKey(
         creditor_address,
+        TypeKey.CREDITOR,
+      );
+
+      const creditor_wallet =
+        this.ethersService.generateWalletWithPrivateKey(privateKey);
+
+      const tx_hash = await this.ethersService.purchasePackage(
+        creditor_wallet,
         institution_code,
         purchase_date,
         invoice_number,
