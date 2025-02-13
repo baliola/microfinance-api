@@ -72,6 +72,21 @@ describe('EthersService', () => {
     expect(wallet).toHaveProperty('privateKey');
   });
 
+  it('should generate wallet with private key', () => {
+    jest.spyOn(ethersService as any, 'generateWallet');
+    const wallet = (ethersService as any).generateWallet();
+
+    // test for generate wallet using private key
+    jest.spyOn(ethersService as any, 'generateWalletWithPrivateKey');
+    const walletPrivateKey = (
+      ethersService as any
+    ).generateWalletWithPrivateKey(wallet.privateKey);
+
+    expect(walletPrivateKey).toBeDefined();
+    expect(walletPrivateKey).toHaveProperty('address');
+    expect(walletPrivateKey).toHaveProperty('privateKey');
+  });
+
   it('should get EIP712 Domain', async () => {
     const domain = await ethersService['getEIP712Domain'](); // Access private method
     expect(domain).toEqual({
