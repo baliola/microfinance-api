@@ -18,7 +18,6 @@ import {
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { IsApprove } from 'src/model/creditor/util/creditor-type.service';
-import { VaultService } from '../vault/vault';
 
 @Injectable()
 export class EthersService implements OnModuleInit, OnModuleDestroy {
@@ -30,7 +29,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: Logger,
-    private vault: VaultService,
   ) {
     this.onModuleInit();
   }
@@ -106,22 +104,22 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Sign MetaTransaction using EIP-712
    */
   protected async signMetaTransaction(
-    from: string,
+    from: Wallet,
     functionCall: string,
   ): Promise<{
-    message: { from: string; nonce: bigint; functionCall: string };
+    message: { from: Wallet; nonce: bigint; functionCall: string };
     signature: string;
   }> {
-    const nonce = BigInt(await this.contract.nonces(from));
+    const current_nonce = BigInt(await this.contract.nonces(from));
     const domain = await this.getEIP712Domain();
 
     const message = {
       from,
-      nonce,
+      nonce: current_nonce,
       functionCall,
     };
 
-    const signature = await this.wallet.signTypedData(
+    const signature = await from.signTypedData(
       domain,
       {
         MetaTransaction: [
@@ -140,7 +138,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Execute MetaTransaction with EIP-712 Signature
    */
   private async executeMetaTransaction(
-    signerAddress: string,
+    signerAddress: Wallet,
     functionCall: string,
   ) {
     try {
@@ -164,7 +162,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         signature,
       );
 
-      if (recoveredSigner !== signerAddress) {
+      if (recoveredSigner !== signerAddress.address) {
         throw new InternalServerErrorException(
           'Invalid EIP-712 Signature: Signer does not match!',
         );
@@ -200,10 +198,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error: any) {
       const decodedError = this.contract.interface.parseError(error.data);
       this.logger.error(decodedError);
@@ -237,10 +232,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -257,10 +249,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         [keccak256(this.abiCoder.encode(['string'], [nik])), debtor_address],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -277,10 +266,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         [keccak256(this.abiCoder.encode(['string'], [creditor_code]))],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -297,10 +283,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         [keccak256(this.abiCoder.encode(['string'], [nik]))],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -323,8 +306,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   async getStatusRequest(nik: string, creditor_code: string) {
     try {
       const status = await this.contract.getStatusRequest(
-        // keccak256(nik),
-        // keccak256(creditor_code),
         keccak256(this.abiCoder.encode(['string'], [nik])),
         keccak256(this.abiCoder.encode(['string'], [creditor_code])),
       );
@@ -340,7 +321,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Request Delegation using MetaTransaction
    */
   async requestDelegation(
-    consumer_address: string,
+    consumer_address: Wallet,
     nik: string,
     consumer_code: string,
     provider_code: string,
@@ -367,7 +348,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Request Delegation using MetaTransaction
    */
   async requestDelegationWithEvent(
-    consumer_address: string,
+    consumer_wallet: Wallet,
     nik: string,
     consumer_code: string,
     provider_code: string,
@@ -390,7 +371,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(consumer_address, functionCall);
+      return await this.executeMetaTransaction(consumer_wallet, functionCall);
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -401,7 +382,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Approve Delegation using MetaTransaction
    */
   async approveDelegation(
-    provider_address: `0x${string}`,
+    provider_wallet: Wallet,
     customer_nik: string,
     consumer: string,
     provider: string,
@@ -418,7 +399,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(provider_address, functionCall);
+      return await this.executeMetaTransaction(provider_wallet, functionCall);
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -438,7 +419,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   }
 
   async purchasePackage(
-    creditor_address: `0x${string}`,
+    creditor_wallet: Wallet,
     institution_code: string,
     purchase_date: string,
     invoice_number: string,
@@ -463,7 +444,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(creditor_address, functionCall);
+      return await this.executeMetaTransaction(creditor_wallet, functionCall);
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -495,10 +476,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      return await this.executeMetaTransaction(
-        this.wallet.address,
-        functionCall,
-      );
+      return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error) {
       this.logger.error(error);
       throw error;
