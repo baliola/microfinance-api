@@ -17,6 +17,7 @@ import {
 import { VaultService } from 'src/providers/vault/vault';
 import { ConfigService } from '@nestjs/config';
 import { encrypt } from 'src/utils/crypto';
+import { ContractTransactionResponse } from 'ethers';
 @Injectable()
 export class CreditorService implements ICreditorService {
   constructor(
@@ -35,9 +36,11 @@ export class CreditorService implements ICreditorService {
     signer_position?: string,
   ): Promise<RegistrationServiceType> {
     try {
-      const { address, privateKey } = this.ethersService.generateWallet();
+      const { privateKey, address } = this.ethersService.generateHDNodeWallet();
+      const wallet =
+        this.ethersService.generateWalletWithPrivateKey(privateKey);
 
-      let tx_hash: any;
+      let tx_hash: ContractTransactionResponse;
       if (
         institution_code &&
         institution_name &&
@@ -47,7 +50,7 @@ export class CreditorService implements ICreditorService {
       ) {
         tx_hash = await this.ethersService.addCreditorWithEvent(
           creditor_code,
-          address as `0x${string}`,
+          wallet,
           institution_code,
           institution_name,
           approval_date,
@@ -55,15 +58,12 @@ export class CreditorService implements ICreditorService {
           signer_position,
         );
       } else {
-        tx_hash = await this.ethersService.addCreditor(
-          creditor_code,
-          address as `0x${string}`,
-        );
+        tx_hash = await this.ethersService.addCreditor(creditor_code, wallet);
       }
 
       const secret = this.configService.get<string>('VAULT_SECRET');
 
-      const { encryptedData } = encrypt(privateKey, secret);
+      const { encryptedData } = encrypt(wallet.privateKey, secret);
 
       await this.vaultService.storePrivateKey(
         encryptedData,
@@ -72,7 +72,11 @@ export class CreditorService implements ICreditorService {
       );
       const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx_hash.hash}`;
 
-      return { wallet_address: address, tx_hash: tx_hash.hash, onchain_url };
+      return {
+        wallet_address: wallet.address,
+        tx_hash: tx_hash.hash,
+        onchain_url,
+      };
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -244,10 +248,10 @@ export class CreditorService implements ICreditorService {
 
   async removeCreditor(creditor_code: string): Promise<RemoveCreditorType> {
     try {
-      const tx = await this.ethersService.removeCreditor(creditor_code);
-      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx.hash}`;
+      const { hash } = await this.ethersService.removeCreditor(creditor_code);
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${hash}`;
 
-      return { tx_hash: tx.hash, onchain_url };
+      return { tx_hash: hash, onchain_url };
     } catch (error) {
       this.logger.error(error);
       throw error;
