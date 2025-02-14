@@ -28,7 +28,7 @@ export class PurchasePackageDTO {
     description: 'Unique Number as Identity of the Invoice.',
     example: '...',
   })
-  @IsNumber()
+  @IsString()
   invoice_number: string;
 
   @ApiProperty({
@@ -61,7 +61,7 @@ export class PurchasePackageDTO {
 
   @ApiProperty({
     description: 'Number of Quota',
-    example: 'YYYY-MM-DD',
+    example: '..',
   })
   @IsNumber()
   quota: number;

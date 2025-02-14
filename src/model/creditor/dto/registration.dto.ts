@@ -10,14 +10,6 @@ export class RegistrationCreditorDTO {
   creditor_code: string;
 
   @ApiProperty({
-    description: 'Creditor Name.',
-    example: 'Koperasi A',
-  })
-  @IsString()
-  @IsOptional()
-  creditor_name: string;
-
-  @ApiProperty({
     description: 'Unique Code of Institution.',
     example: '...',
   })
