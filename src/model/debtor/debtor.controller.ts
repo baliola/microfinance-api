@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { LogActivityDTO } from './dto/log-activity.dto';
 import { RegistrationDebtorDTO } from './dto/registration.dto';
 import {
@@ -15,6 +24,8 @@ import { RegistrationDebtorResponseDTO } from './dto/response/registration-res.d
 import { DebtorService } from './debtor.service';
 import { RemoveDebtorDTO } from './dto/remove-debtor.dto';
 import { RemoveDebtorResponseDTO } from './dto/response/remove-debtor-res.dto';
+import { GetDebtorDTO } from './dto/get-debtor.dto';
+import { GetDebtorResponseDTO } from './dto/response/get-debtor-res.dto';
 
 @Controller('/api/debtor')
 export class DebtorController {
@@ -40,6 +51,10 @@ export class DebtorController {
               type: 'string',
               example: 'Log activity retrieved.',
             },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
           },
         },
       ],
@@ -51,6 +66,7 @@ export class DebtorController {
         accessed_at: 'YYYY-MM-DD',
       },
       message: 'Log activity retrieved.',
+      timestamp: '2025-02-13T12:12:12.012',
     },
   })
   @ApiBadRequestResponse({
@@ -62,7 +78,8 @@ export class DebtorController {
       },
     },
   })
-  @Get('/log-activity')
+  @Get('log-activity')
+  @HttpCode(HttpStatus.OK)
   async logActivity(
     @Query() dto: LogActivityDTO,
   ): Promise<WrapperResponseDTO<LogActivityResponseDTO[]>> {
@@ -96,7 +113,11 @@ export class DebtorController {
             data: { $ref: getSchemaPath(RegistrationDebtorResponseDTO) },
             message: {
               type: 'string',
-              example: 'Registration success.',
+              example: 'Debtor registration success.',
+            },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
             },
           },
         },
@@ -112,7 +133,8 @@ export class DebtorController {
       },
     },
   })
-  @Post('/registration')
+  @Post('registration')
+  @HttpCode(HttpStatus.CREATED)
   async registration(
     @Body() dto: RegistrationDebtorDTO,
   ): Promise<WrapperResponseDTO<RegistrationDebtorResponseDTO>> {
@@ -127,7 +149,7 @@ export class DebtorController {
         onchain_url,
       };
 
-      return new WrapperResponseDTO(response, 'Registration success.');
+      return new WrapperResponseDTO(response, 'Debtor registration success.');
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -151,6 +173,10 @@ export class DebtorController {
               type: 'string',
               example: 'Removing Debtor success.',
             },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
           },
         },
       ],
@@ -165,7 +191,8 @@ export class DebtorController {
       },
     },
   })
-  @Post('/remove-debtor')
+  @Post('remove-debtor')
+  @HttpCode(HttpStatus.OK)
   async removeDebtor(
     @Body() dto: RemoveDebtorDTO,
   ): Promise<WrapperResponseDTO<RemoveDebtorResponseDTO>> {
@@ -181,6 +208,61 @@ export class DebtorController {
       };
 
       return new WrapperResponseDTO(response, 'Removing Debtor success.');
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  @ApiExtraModels(WrapperResponseDTO, GetDebtorResponseDTO)
+  @ApiOperation({
+    summary: 'Get Debtor',
+    description: 'Get Debtor Data.',
+  })
+  @ApiOkResponse({
+    description: 'Get Debtor success.',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(WrapperResponseDTO) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(GetDebtorResponseDTO) },
+            message: {
+              type: 'string',
+              example: 'Get Debtor success.',
+            },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation Error.',
+    schema: {
+      example: {
+        data: null,
+        messsage: 'Validation Error.',
+      },
+    },
+  })
+  @Post('get-debtor')
+  @HttpCode(HttpStatus.OK)
+  async getDebtor(
+    @Body() dto: GetDebtorDTO,
+  ): Promise<WrapperResponseDTO<GetDebtorResponseDTO>> {
+    try {
+      const { nik } = dto;
+
+      const wallet_address = await this.debtorService.getDebtor(nik);
+      const response: GetDebtorResponseDTO = {
+        wallet_address,
+      };
+
+      return new WrapperResponseDTO(response, 'Get Debtor Data success.');
     } catch (error) {
       this.logger.error(error);
       throw error;
