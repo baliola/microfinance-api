@@ -3,7 +3,7 @@ import {
   AddDebtorToCreditorType,
   CreateDelegationType,
   DelegationApprovalType,
-  PurcahsePackageType,
+  PurchasePackageType,
   RegistrationServiceType,
 } from './creditor-type.service';
 
@@ -59,5 +59,5 @@ export interface ICreditorService {
     start_date: string,
     end_date: string,
     quota: number,
-  ): Promise<PurcahsePackageType>;
+  ): Promise<PurchasePackageType>;
 }
