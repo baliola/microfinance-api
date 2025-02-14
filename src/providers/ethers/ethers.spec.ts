@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EthersService } from './ethers';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ethers } from 'ethers';
+import { ethers, Wallet } from 'ethers';
 import {
   generateTestAddDebtorToCreditorData,
   generateTestCreditorData,
@@ -366,6 +366,7 @@ describe('EthersService', () => {
       let consumer_approval_date: string;
       let consumer_signer_name: string;
       let consumer_signer_position: string;
+      let consumer_wallet: Wallet;
 
       let provider_address: `0x${string}`;
       let provider_code: string;
@@ -415,7 +416,8 @@ describe('EthersService', () => {
 
         // add creditor (consumer)
         jest.spyOn(ethersService as any, 'generateWallet');
-        consumer_address = (ethersService as any).generateWallet().address;
+        consumer_wallet = (ethersService as any).generateWallet();
+        consumer_address = consumer_wallet.address as `0x${string}`;
 
         consumer_code = Math.floor(
           1000000000 + Math.random() * 9000000000,
@@ -465,7 +467,7 @@ describe('EthersService', () => {
       it('should accept request delegation', async () => {
         try {
           const data = await ethersService.requestDelegation(
-            consumer_address,
+            consumer_wallet,
             nik,
             consumer_code,
             provider_code,
