@@ -42,11 +42,10 @@ export class DebtorService implements IDebtorService {
 
   async registration(nik: string): Promise<RegistrationServiceType> {
     try {
-      const { address, privateKey } = this.ethersService.generateWallet();
-      const tx_hash = await this.ethersService.addDebtor(
-        nik,
-        address as `0x${string}`,
-      );
+      const { address, privateKey } = this.ethersService.generateHDNodeWallet();
+      const wallet =
+        this.ethersService.generateWalletWithPrivateKey(privateKey);
+      const { hash } = await this.ethersService.addDebtor(nik, wallet);
 
       const secret = this.configService.get<string>('VAULT_SECRET');
       const { encryptedData } = encrypt(privateKey, secret);
@@ -57,9 +56,9 @@ export class DebtorService implements IDebtorService {
         TypeKey.DEBTOR,
       );
 
-      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx_hash.hash}`;
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${hash}`;
 
-      return { wallet_address: address, tx_hash: tx_hash.hash, onchain_url };
+      return { wallet_address: address, tx_hash: hash, onchain_url };
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -73,6 +72,17 @@ export class DebtorService implements IDebtorService {
       const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx.hash}`;
 
       return { tx_hash: tx.hash, onchain_url };
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  async getDebtor(nik: string): Promise<WalletAddressType> {
+    try {
+      const tx = await this.ethersService.getDebtor(nik);
+
+      return tx;
     } catch (error) {
       this.logger.error(error);
       throw error;
