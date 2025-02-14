@@ -49,6 +49,10 @@ export class CreditorController {
               type: 'string',
               example: 'Delegation request to creditor sent.',
             },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
           },
         },
       ],
@@ -126,6 +130,10 @@ export class CreditorController {
             data: { $ref: getSchemaPath(StatusDelegationResponseDTO) },
             message: {
               type: 'string',
+            },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
             },
           },
         },
@@ -231,6 +239,10 @@ export class CreditorController {
             message: {
               type: 'string',
             },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
           },
         },
       ],
@@ -321,6 +333,10 @@ export class CreditorController {
               type: 'string',
               example: 'Creditor registration success.',
             },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
           },
         },
       ],
@@ -342,7 +358,6 @@ export class CreditorController {
     try {
       const {
         creditor_code,
-        creditor_name,
         institution_code,
         institution_name,
         approval_date,
@@ -352,7 +367,6 @@ export class CreditorController {
       const { wallet_address, tx_hash, onchain_url } =
         await this.creditorService.registration(
           creditor_code,
-          creditor_name,
           institution_code,
           institution_name,
           approval_date,
@@ -389,6 +403,10 @@ export class CreditorController {
               type: 'string',
               example: 'Adding debtor to creditor success.',
             },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
           },
         },
       ],
@@ -420,7 +438,6 @@ export class CreditorController {
         tx_hash,
         onchain_url,
       } = await this.creditorService.addDebtorToCreditor(
-        dto.creditor_address,
         dto.debtor_nik,
         dto.creditor_code,
         dto.debtor_name,
@@ -470,6 +487,10 @@ export class CreditorController {
             message: {
               type: 'string',
               example: 'Removing Creditor success.',
+            },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
             },
           },
         },
@@ -522,6 +543,10 @@ export class CreditorController {
             message: {
               type: 'string',
               example: 'Purchasing Package success.',
+            },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
             },
           },
         },
