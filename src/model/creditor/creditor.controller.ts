@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { StatusCreditorDelegationDTO } from './dto/status-delegation.dto';
 import {
   ApiBadRequestResponse,
@@ -24,6 +33,9 @@ import { RemoveCreditorDTO } from './dto/remove-creditor.dto';
 import { RemoveCreditorResponseDTO } from './dto/response/remove-creditor-res.dto';
 import { PurchasePackageDTO } from './dto/purchase-package.dto';
 import { PurchasePackageResponseDTO } from './dto/response/purchase-package-res.dto';
+import { GetCreditorDTO } from './dto/get-creditor.dto';
+import { GetCreditorResponseDTO } from './dto/response/get-creditor-res.dto';
+import { WalletAddressType } from 'src/utils/type/type';
 
 @Controller('/api/creditor')
 export class CreditorController {
@@ -68,39 +80,31 @@ export class CreditorController {
     },
   })
   @Post('creditor-delegation')
+  @HttpCode(HttpStatus.OK)
   async reqCreditorDelegation(
     @Body() dto: ReqCreditorDelegationDTO,
   ): Promise<WrapperResponseDTO<ReqDelegationResponseDTO>> {
     try {
-      const {
-        nik,
-        request_id,
-        consumer_code,
-        provider_code,
-        transaction_id,
-        reference_id,
-        request_date,
-        tx_hash,
-        onchain_url,
-      } = await this.creditorService.createDelegation(
-        dto.consumer_address,
-        dto.debtor_nik,
-        dto.creditor_consumer_code,
-        dto.creditor_provider_code,
-        dto.request_id,
-        dto.transaction_id,
-        dto.reference_id,
-        dto.request_data,
-      );
+      const { tx_hash, onchain_url } =
+        await this.creditorService.createDelegation(
+          dto.debtor_nik,
+          dto.creditor_consumer_code,
+          dto.creditor_provider_code,
+          dto.consumer_address,
+          dto.request_id,
+          dto.transaction_id,
+          dto.reference_id,
+          dto.request_data,
+        );
 
       const response: ReqDelegationResponseDTO = {
-        nik,
-        request_id,
-        creditor_consumer_code: consumer_code,
-        creditor_provider_code: provider_code,
-        transaction_id,
-        reference_id,
-        request_date,
+        nik: dto.debtor_nik,
+        creditor_consumer_code: dto.creditor_consumer_code as WalletAddressType,
+        creditor_provider_code: dto.creditor_provider_code as WalletAddressType,
+        request_id: dto.request_id,
+        transaction_id: dto.transaction_id,
+        reference_id: dto.reference_id,
+        request_date: dto.request_data,
         tx_hash: tx_hash as `0x${string}`,
         onchain_url,
       };
@@ -179,6 +183,7 @@ export class CreditorController {
     },
   })
   @Get('creditor-delegation/status')
+  @HttpCode(HttpStatus.OK)
   @ApiQuery({
     name: 'nik',
     required: true,
@@ -282,6 +287,7 @@ export class CreditorController {
     },
   })
   @Post('delegation-approval')
+  @HttpCode(HttpStatus.OK)
   async delegationApproval(
     @Body() dto: DelegationApprovalDTO,
   ): Promise<WrapperResponseDTO<DelegationApprovalResponseDTO>> {
@@ -352,6 +358,7 @@ export class CreditorController {
     },
   })
   @Post('registration')
+  @HttpCode(HttpStatus.CREATED)
   async registration(
     @Body() dto: RegistrationCreditorDTO,
   ): Promise<WrapperResponseDTO<RegistrationCreditorResponseDTO>> {
@@ -422,41 +429,32 @@ export class CreditorController {
     },
   })
   @Post('add-debtor-to-creditor')
+  @HttpCode(HttpStatus.OK)
   async addDebtorToCreditor(
     @Body() dto: AddDebtorToCreditorDTO,
   ): Promise<WrapperResponseDTO<AddDebtorToCreditorResponseDTO>> {
     try {
-      const {
-        debtor_nik,
-        creditor_code,
-        name,
-        creditor_name,
-        application_date,
-        approval_date,
-        url_KTP,
-        url_approval,
-        tx_hash,
-        onchain_url,
-      } = await this.creditorService.addDebtorToCreditor(
-        dto.debtor_nik,
-        dto.creditor_code,
-        dto.debtor_name,
-        dto.creditor_name,
-        dto.application_date,
-        dto.approval_date,
-        dto.url_KTP,
-        dto.url_approval,
-      );
+      const { tx_hash, onchain_url } =
+        await this.creditorService.addDebtorToCreditor(
+          dto.debtor_nik,
+          dto.creditor_code,
+          dto.debtor_name,
+          dto.creditor_name,
+          dto.application_date,
+          dto.approval_date,
+          dto.url_KTP,
+          dto.url_approval,
+        );
 
       const response: AddDebtorToCreditorResponseDTO = {
-        debtor_nik,
-        creditor_code,
-        name,
-        creditor_name,
-        application_date,
-        approval_date,
-        url_KTP,
-        url_approval,
+        debtor_nik: dto.debtor_nik,
+        creditor_code: dto.creditor_code,
+        name: dto.debtor_name,
+        creditor_name: dto.creditor_name,
+        application_date: dto.application_date,
+        approval_date: dto.approval_date,
+        url_KTP: dto.url_KTP,
+        url_approval: dto.url_approval,
         tx_hash: tx_hash as `0x${string}`,
         onchain_url,
       };
@@ -507,6 +505,7 @@ export class CreditorController {
     },
   })
   @Post('remove-creditor')
+  @HttpCode(HttpStatus.OK)
   async removeCreditor(
     @Body() dto: RemoveCreditorDTO,
   ): Promise<WrapperResponseDTO<RemoveCreditorResponseDTO>> {
@@ -563,6 +562,7 @@ export class CreditorController {
     },
   })
   @Post('purchase-package')
+  @HttpCode(HttpStatus.OK)
   async purchasePackage(
     @Body() dto: PurchasePackageDTO,
   ): Promise<WrapperResponseDTO<PurchasePackageResponseDTO>> {
@@ -597,6 +597,63 @@ export class CreditorController {
       };
 
       return new WrapperResponseDTO(response, 'Purchasing Package success.');
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  @ApiExtraModels(WrapperResponseDTO, GetCreditorResponseDTO)
+  @ApiOperation({
+    summary: 'Get Creditor',
+    description: 'Get Creditor Data.',
+  })
+  @ApiOkResponse({
+    description: 'Get Creditor success.',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(WrapperResponseDTO) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(GetCreditorResponseDTO) },
+            message: {
+              type: 'string',
+              example: 'Get Creditor success.',
+            },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation Error.',
+    schema: {
+      example: {
+        data: null,
+        messsage: 'Validation Error.',
+      },
+    },
+  })
+  @Post('get-creditor')
+  @HttpCode(HttpStatus.OK)
+  async getCreditor(
+    @Body() dto: GetCreditorDTO,
+  ): Promise<WrapperResponseDTO<GetCreditorResponseDTO>> {
+    try {
+      const { creditor_code } = dto;
+
+      const wallet_address =
+        await this.creditorService.getCreditor(creditor_code);
+
+      const response: GetCreditorResponseDTO = {
+        wallet_address,
+      };
+
+      return new WrapperResponseDTO(response, 'Get Creditor Data Success');
     } catch (error) {
       this.logger.error(error);
       throw error;
