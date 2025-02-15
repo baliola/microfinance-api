@@ -25,7 +25,7 @@ export class AddDebtorToCreditorDTO {
 
   @ApiProperty({
     description: 'Creditor name.',
-    example: 'Creditor name...',
+    example: 'creditor name...',
   })
   @IsString()
   creditor_name: string;

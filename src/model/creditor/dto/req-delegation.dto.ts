@@ -4,13 +4,6 @@ import { WalletAddressType } from 'src/utils/type/type';
 
 export class ReqCreditorDelegationDTO {
   @ApiProperty({
-    description: 'Creditor (Consumer) Unique Address.',
-    example: '0x...',
-  })
-  @IsString()
-  consumer_address: WalletAddressType;
-
-  @ApiProperty({
     description: 'National Identification number from customer.',
     example: '123...',
   })
@@ -30,6 +23,13 @@ export class ReqCreditorDelegationDTO {
   })
   @IsString()
   creditor_provider_code: string;
+
+  @ApiProperty({
+    description: 'Creditor Consumer Unique Address.',
+    example: '...',
+  })
+  @IsString()
+  consumer_address: WalletAddressType;
 
   @ApiProperty({
     description: 'Unique Identifier of the request.',
