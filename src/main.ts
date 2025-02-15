@@ -8,6 +8,7 @@ import helmet, { HelmetOptions } from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from './interceptors/response/response.interceptor';
+import { CustomExceptionFilter } from './common/errors/custom-http.exception';
 
 loadEnv();
 async function bootstrap() {
@@ -71,6 +72,7 @@ async function bootstrap() {
   logger.log('Enabling Global Interceptors...');
   app.useGlobalInterceptors(new TimeInterceptor());
   app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalFilters(new CustomExceptionFilter());
 
   // Swagger Docs.
   logger.log('Enabling Swagger Docs...');
