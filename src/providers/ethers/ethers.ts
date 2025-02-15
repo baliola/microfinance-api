@@ -240,11 +240,15 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     signer_position: string,
   ): Promise<ContractTransactionResponse> {
     try {
+      const hashCreditorCode = keccak256(
+        this.abiCoder.encode(['string'], [creditor_code]),
+      );
+
       const functionCall = this.contract.interface.encodeFunctionData(
         'addCreditor(address,bytes32,string,string,string,string,string)',
         [
           creditor_wallet.address,
-          keccak256(this.abiCoder.encode(['string'], [creditor_code])),
+          hashCreditorCode,
           institution_code,
           institution_name,
           approval_date,
@@ -254,9 +258,20 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       );
 
       return await this.executeMetaTransaction(this.wallet, functionCall);
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
+    } catch (error: any) {
+      if (!error.data) {
+        this.logger.error('Error data is undefined:', error);
+        throw error;
+      }
+
+      try {
+        const decodedError = this.contract.interface.parseError(error.data);
+        this.logger.error(decodedError);
+        throw decodedError;
+      } catch (parseError) {
+        this.logger.error('Error parsing failed:', parseError);
+        throw error;
+      }
     }
   }
 
@@ -293,29 +308,51 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  // wallet platform
   /**
    * ✅ Request Delegation using MetaTransaction
    */
   async requestDelegation(
-    consumer_wallet: Wallet,
     nik: string,
     consumer_code: string,
     provider_code: string,
+    consumer_wallet: Wallet,
   ) {
     try {
+      console.log('consumer_code: ', consumer_code);
+      console.log('provider_code: ', provider_code);
+      const hashNik = keccak256(this.abiCoder.encode(['string'], [nik]));
+      const hashConsumerCode = keccak256(
+        this.abiCoder.encode(['string'], [consumer_code]),
+      );
+      const hashProviderCode = keccak256(
+        this.abiCoder.encode(['string'], [provider_code]),
+      );
+      const addressConsumer = await this.contract.getCreditor(hashConsumerCode);
+      console.log('address consumer: ', addressConsumer);
+      const addressProvider = await this.contract.getCreditor(hashProviderCode);
+      console.log('address provider: ', addressProvider);
+
       const functionCall = this.contract.interface.encodeFunctionData(
         'requestDelegation(bytes32,bytes32,bytes32)',
-        [
-          keccak256(this.abiCoder.encode(['string'], [nik])),
-          keccak256(this.abiCoder.encode(['string'], [consumer_code])),
-          keccak256(this.abiCoder.encode(['string'], [provider_code])),
-        ],
+        [hashNik, hashConsumerCode, hashProviderCode],
       );
 
       return await this.executeMetaTransaction(consumer_wallet, functionCall);
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
+    } catch (error: any) {
+      if (!error.data) {
+        this.logger.error('Error data is undefined:', error);
+        throw error;
+      }
+
+      try {
+        const decodedError = this.contract.interface.parseError(error.data);
+        this.logger.error(decodedError);
+        throw decodedError;
+      } catch (parseError) {
+        this.logger.error('Error parsing failed:', parseError);
+        throw error;
+      }
     }
   }
 
@@ -323,22 +360,33 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Request Delegation using MetaTransaction
    */
   async requestDelegationWithEvent(
-    consumer_wallet: Wallet,
     nik: string,
     consumer_code: string,
     provider_code: string,
+    consumer_wallet: Wallet,
     request_id: string,
     transaction_id: string,
     referenced_id: string,
     request_data: string,
   ) {
     try {
+      const hashNik = keccak256(this.abiCoder.encode(['string'], [nik]));
+      const hashConsumerCode = keccak256(
+        this.abiCoder.encode(['string'], [consumer_code]),
+      );
+      const hashProviderCode = keccak256(
+        this.abiCoder.encode(['string'], [provider_code]),
+      );
+      const addressConsumer = await this.contract.getCreditor(hashConsumerCode);
+      console.log('address consumer: ', addressConsumer);
+      const addressProvider = await this.contract.getCreditor(hashProviderCode);
+      console.log('address consumer: ', addressProvider);
       const functionCall = this.contract.interface.encodeFunctionData(
         'requestDelegation(bytes32,bytes32,bytes32,string,string,string,string)',
         [
-          keccak256(this.abiCoder.encode(['string'], [nik])),
-          keccak256(this.abiCoder.encode(['string'], [consumer_code])),
-          keccak256(this.abiCoder.encode(['string'], [provider_code])),
+          hashNik,
+          hashConsumerCode,
+          hashProviderCode,
           request_id,
           transaction_id,
           referenced_id,
@@ -347,9 +395,20 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       );
 
       return await this.executeMetaTransaction(consumer_wallet, functionCall);
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
+    } catch (error: any) {
+      if (!error.data) {
+        this.logger.error('Error data is undefined:', error);
+        throw error;
+      }
+
+      try {
+        const decodedError = this.contract.interface.parseError(error.data);
+        this.logger.error(decodedError);
+        throw decodedError;
+      } catch (parseError) {
+        this.logger.error('Error parsing failed:', parseError);
+        throw error;
+      }
     }
   }
 
@@ -388,8 +447,20 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       );
 
       return creditor;
-    } catch (error) {
-      this.logger.error(error);
+    } catch (error: any) {
+      if (!error.data) {
+        this.logger.error('Error data is undefined:', error);
+        throw error;
+      }
+
+      try {
+        const decodedError = this.contract.interface.parseError(error.data);
+        this.logger.error(decodedError);
+        throw decodedError;
+      } catch (parseError) {
+        this.logger.error('Error parsing failed:', parseError);
+        throw error;
+      }
     }
   }
 
@@ -437,11 +508,16 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     url_approval: string,
   ) {
     try {
+      const hashNik = keccak256(this.abiCoder.encode(['string'], [debtor_nik]));
+      const hashCreditorCode = keccak256(
+        this.abiCoder.encode(['string'], [creditor_code]),
+      );
+
       const functionCall = this.contract.interface.encodeFunctionData(
         'addDebtorToCreditor(bytes32,bytes32,string,string,string,string,string,string)',
         [
-          keccak256(this.abiCoder.encode(['string'], [debtor_nik])),
-          keccak256(this.abiCoder.encode(['string'], [creditor_code])),
+          hashNik,
+          hashCreditorCode,
           debtor_name,
           creditor_name,
           application_date,
@@ -452,7 +528,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       );
 
       return await this.executeMetaTransaction(this.wallet, functionCall);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
       throw error;
     }
@@ -486,12 +562,11 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     debtor_wallet: Wallet,
   ): Promise<ContractTransactionResponse> {
     try {
+      const hashNik = keccak256(this.abiCoder.encode(['string'], [nik]));
+
       const functionCall = this.contract.interface.encodeFunctionData(
         'addDebtor(bytes32,address)',
-        [
-          keccak256(this.abiCoder.encode(['string'], [nik])),
-          debtor_wallet.address,
-        ],
+        [hashNik, debtor_wallet.address],
       );
 
       return await this.executeMetaTransaction(this.wallet, functionCall);
@@ -527,7 +602,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         keccak256(this.abiCoder.encode(['string'], [nik])),
       );
 
-      console.log('dataog: ', dataLog);
       return dataLog;
     } catch (error) {
       this.logger.error(error);
@@ -545,9 +619,20 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       );
 
       return debtor;
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
+    } catch (error: any) {
+      if (!error.data) {
+        this.logger.error('Error data is undefined:', error);
+        throw error;
+      }
+
+      try {
+        const decodedError = this.contract.interface.parseError(error.data);
+        this.logger.error(decodedError);
+        throw decodedError;
+      } catch (parseError) {
+        this.logger.error('Error parsing failed:', parseError);
+        throw error;
+      }
     }
   }
 }
