@@ -457,11 +457,6 @@ describe('EthersService', () => {
           url_KTP,
           url_approval,
         );
-
-        console.log('consumer_address: ', consumer_address);
-        console.log('nik: ', nik);
-        console.log('consumer_code: ', consumer_code);
-        console.log('provider_code: ', provider_code);
       }, 50000);
 
       it('should accept request delegation', async () => {
