@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ICreditorService } from './util/creditor.service.interface';
 import {
   TransactionResponseType,
   TransactionType,
   TypeKey,
+  WalletAddressType,
 } from 'src/utils/type/type';
 import { EthersService } from '../../providers/ethers/ethers';
 import {
@@ -16,7 +17,7 @@ import {
 } from './util/creditor-type.service';
 import { VaultService } from 'src/providers/vault/vault';
 import { ConfigService } from '@nestjs/config';
-import { encrypt } from 'src/utils/crypto';
+import { decrypt, encrypt } from 'src/utils/crypto';
 import { ContractTransactionResponse } from 'ethers';
 @Injectable()
 export class CreditorService implements ICreditorService {
@@ -61,9 +62,9 @@ export class CreditorService implements ICreditorService {
         tx_hash = await this.ethersService.addCreditor(creditor_code, wallet);
       }
 
-      const secret = this.configService.get<string>('VAULT_SECRET');
+      const secret = this.configService.get<string>('CRYPTO_SECRET');
 
-      const { encryptedData } = encrypt(wallet.privateKey, secret);
+      const encryptedData = encrypt(wallet.privateKey, secret);
 
       await this.vaultService.storePrivateKey(
         encryptedData,
@@ -77,8 +78,11 @@ export class CreditorService implements ICreditorService {
         tx_hash: tx_hash.hash,
         onchain_url,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      if (error.code) {
+        throw new BadRequestException('Debtor already exist.');
+      }
       throw error;
     }
   }
@@ -146,10 +150,10 @@ export class CreditorService implements ICreditorService {
   }
 
   async createDelegation(
-    consumer_address: `0x${string}`,
     nik: string,
     consumer_code: string,
     provider_code: string,
+    consumer_address: WalletAddressType,
     request_id?: string,
     transaction_id?: string,
     referenced_id?: string,
@@ -161,16 +165,17 @@ export class CreditorService implements ICreditorService {
         consumer_address,
         TypeKey.CREDITOR,
       );
+      const secret = this.configService.get<string>('CRYPTO_SECRET');
+      const decryptedPrivateKey = decrypt(privateKey, secret);
 
       const consumer_wallet =
-        this.ethersService.generateWalletWithPrivateKey(privateKey);
-
+        this.ethersService.generateWalletWithPrivateKey(decryptedPrivateKey);
       if (request_id && transaction_id && referenced_id && request_data) {
         tx = await this.ethersService.requestDelegationWithEvent(
-          consumer_wallet,
           nik,
           consumer_code,
           provider_code,
+          consumer_wallet,
           request_id,
           transaction_id,
           referenced_id,
@@ -178,10 +183,10 @@ export class CreditorService implements ICreditorService {
         );
       } else {
         tx = await this.ethersService.requestDelegation(
-          consumer_wallet,
           nik,
           consumer_code,
           provider_code,
+          consumer_wallet,
         );
       }
 
@@ -252,9 +257,11 @@ export class CreditorService implements ICreditorService {
       const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${hash}`;
 
       return { tx_hash: hash, onchain_url };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
-      throw error;
+      if (error.code) {
+        throw new BadRequestException('Creditor already removed.');
+      }
     }
   }
 
@@ -274,9 +281,11 @@ export class CreditorService implements ICreditorService {
         creditor_address,
         TypeKey.CREDITOR,
       );
+      const secret = this.configService.get<string>('CRYPTO_SECRET');
+      const decryptedPrivateKey = decrypt(privateKey, secret);
 
       const creditor_wallet =
-        this.ethersService.generateWalletWithPrivateKey(privateKey);
+        this.ethersService.generateWalletWithPrivateKey(decryptedPrivateKey);
 
       const tx_hash = await this.ethersService.purchasePackage(
         creditor_wallet,
@@ -293,7 +302,19 @@ export class CreditorService implements ICreditorService {
 
       return { tx_hash: tx_hash.hash, onchain_url };
     } catch (error) {
-      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  async getCreditor(creditor_code: string): Promise<WalletAddressType | null> {
+    try {
+      const tx = await this.ethersService.getCreditor(creditor_code);
+      if (tx === '0x0000000000000000000000000000000000000000') {
+        return null;
+      }
+
+      return tx;
+    } catch (error) {
       throw error;
     }
   }
