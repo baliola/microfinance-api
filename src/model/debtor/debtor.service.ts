@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { IDebtorService } from './util/debtor.service.interface';
 import { EthersService } from 'src/providers/ethers/ethers';
 import {
@@ -47,8 +47,8 @@ export class DebtorService implements IDebtorService {
         this.ethersService.generateWalletWithPrivateKey(privateKey);
       const { hash } = await this.ethersService.addDebtor(nik, wallet);
 
-      const secret = this.configService.get<string>('VAULT_SECRET');
-      const { encryptedData } = encrypt(privateKey, secret);
+      const secret = this.configService.get<string>('CRYPTO_SECRET');
+      const encryptedData = encrypt(privateKey, secret);
 
       await this.vaultService.storePrivateKey(
         encryptedData,
@@ -59,8 +59,11 @@ export class DebtorService implements IDebtorService {
       const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${hash}`;
 
       return { wallet_address: address, tx_hash: hash, onchain_url };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      if (error.code) {
+        throw new BadRequestException('Debtor already exist.');
+      }
       throw error;
     }
   }
@@ -72,19 +75,24 @@ export class DebtorService implements IDebtorService {
       const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx.hash}`;
 
       return { tx_hash: tx.hash, onchain_url };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      if (error.code) {
+        throw new BadRequestException('Debtor already removed.');
+      }
       throw error;
     }
   }
 
-  async getDebtor(nik: string): Promise<WalletAddressType> {
+  async getDebtor(nik: string): Promise<WalletAddressType | null> {
     try {
       const tx = await this.ethersService.getDebtor(nik);
+      if (tx === '0x0000000000000000000000000000000000000000') {
+        return null;
+      }
 
       return tx;
     } catch (error) {
-      this.logger.error(error);
       throw error;
     }
   }
