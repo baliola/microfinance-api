@@ -19,6 +19,7 @@ import {
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { IsApprove } from 'src/model/creditor/util/creditor-type.service';
+import { StatusCreditorDelegation } from 'src/utils/enum';
 import { WalletAddressType } from 'src/utils/type/type';
 
 @Injectable()
@@ -316,11 +317,8 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     nik: string,
     consumer_code: string,
     provider_code: string,
-    consumer_wallet: Wallet,
   ) {
     try {
-      console.log('consumer_code: ', consumer_code);
-      console.log('provider_code: ', provider_code);
       const hashNik = keccak256(this.abiCoder.encode(['string'], [nik]));
       const hashConsumerCode = keccak256(
         this.abiCoder.encode(['string'], [consumer_code]),
@@ -328,17 +326,13 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       const hashProviderCode = keccak256(
         this.abiCoder.encode(['string'], [provider_code]),
       );
-      const addressConsumer = await this.contract.getCreditor(hashConsumerCode);
-      console.log('address consumer: ', addressConsumer);
-      const addressProvider = await this.contract.getCreditor(hashProviderCode);
-      console.log('address provider: ', addressProvider);
 
       const functionCall = this.contract.interface.encodeFunctionData(
         'requestDelegation(bytes32,bytes32,bytes32)',
         [hashNik, hashConsumerCode, hashProviderCode],
       );
 
-      return await this.executeMetaTransaction(consumer_wallet, functionCall);
+      return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error: any) {
       if (!error.data) {
         this.logger.error('Error data is undefined:', error);
@@ -363,11 +357,10 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     nik: string,
     consumer_code: string,
     provider_code: string,
-    consumer_wallet: Wallet,
     request_id: string,
     transaction_id: string,
     referenced_id: string,
-    request_data: string,
+    request_date: string,
   ) {
     try {
       const hashNik = keccak256(this.abiCoder.encode(['string'], [nik]));
@@ -377,10 +370,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       const hashProviderCode = keccak256(
         this.abiCoder.encode(['string'], [provider_code]),
       );
-      const addressConsumer = await this.contract.getCreditor(hashConsumerCode);
-      console.log('address consumer: ', addressConsumer);
-      const addressProvider = await this.contract.getCreditor(hashProviderCode);
-      console.log('address consumer: ', addressProvider);
       const functionCall = this.contract.interface.encodeFunctionData(
         'requestDelegation(bytes32,bytes32,bytes32,string,string,string,string)',
         [
@@ -390,11 +379,11 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
           request_id,
           transaction_id,
           referenced_id,
-          request_data,
+          request_date,
         ],
       );
 
-      return await this.executeMetaTransaction(consumer_wallet, functionCall);
+      return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error: any) {
       if (!error.data) {
         this.logger.error('Error data is undefined:', error);
@@ -418,25 +407,42 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   async approveDelegation(
     provider_wallet: Wallet,
     customer_nik: string,
-    consumer: string,
-    provider: string,
+    consumer_code: string,
+    provider_code: string,
     is_approve: IsApprove,
   ) {
     try {
-      const functionCall = this.contract.interface.encodeFunctionData(
-        'delegate(bytes32,bytes32,bytes32,uint8)',
-        [
-          keccak256(this.abiCoder.encode(['string'], [customer_nik])),
-          keccak256(this.abiCoder.encode(['string'], [consumer])),
-          keccak256(this.abiCoder.encode(['string'], [provider])),
-          is_approve,
-        ],
+      const hashCustomerNIK = keccak256(
+        this.abiCoder.encode(['string'], [customer_nik]),
+      );
+      const hashConsumerCode = keccak256(
+        this.abiCoder.encode(['string'], [consumer_code]),
+      );
+      const hashProviderCode = keccak256(
+        this.abiCoder.encode(['string'], [provider_code]),
       );
 
-      return await this.executeMetaTransaction(provider_wallet, functionCall);
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'delegate(bytes32,bytes32,bytes32,uint8)',
+        [hashCustomerNIK, hashConsumerCode, hashProviderCode, is_approve],
+      );
+
+      return await this.executeMetaTransaction(this.wallet, functionCall);
+    } catch (error: any) {
+      console.log('error: ', error);
+      if (!error.data) {
+        this.logger.error('Error data is undefined:', error);
+        throw error;
+      }
+
+      try {
+        const decodedError = this.contract.interface.parseError(error.data);
+        this.logger.error(decodedError);
+        throw decodedError;
+      } catch (parseError) {
+        this.logger.error('Error parsing failed:', parseError);
+        throw error;
+      }
     }
   }
 
@@ -548,7 +554,23 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getActiveCreditorByStatus() {}
+  async getActiveCreditorByStatus(
+    debtor_nik: string,
+    status: StatusCreditorDelegation,
+  ) {
+    try {
+      const data = await this.contract.getActiveCreditorsByStatus(
+        keccak256(this.abiCoder.encode(['string'], [debtor_nik])),
+        status,
+      );
+
+      return data;
+    } catch (error) {
+      console.log('error: ', error);
+      this.logger.error(error);
+      throw error;
+    }
+  }
 
   /**
    *  ================== Debtor Section =====================
