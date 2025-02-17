@@ -36,6 +36,8 @@ import { PurchasePackageResponseDTO } from './dto/response/purchase-package-res.
 import { GetCreditorDTO } from './dto/get-creditor.dto';
 import { GetCreditorResponseDTO } from './dto/response/get-creditor-res.dto';
 import { WalletAddressType } from 'src/utils/type/type';
+import { GetActiveCreditorByStatusDTO } from './dto/get-active-creditor-by-status.dto';
+import { GetActiveCreditorByStatusResponseDTO } from './dto/response/get-active-creditor-by-status-res.dto';
 
 @Controller('/api/creditor')
 export class CreditorController {
@@ -49,7 +51,7 @@ export class CreditorController {
     summary: 'Request Delegation',
     description: 'Request delegation to creditor for accessing data.',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: 'Creditor approval request successfully sent.',
     schema: {
       allOf: [
@@ -90,11 +92,10 @@ export class CreditorController {
           dto.debtor_nik,
           dto.creditor_consumer_code,
           dto.creditor_provider_code,
-          dto.consumer_address,
           dto.request_id,
           dto.transaction_id,
           dto.reference_id,
-          dto.request_data,
+          dto.request_date,
         );
 
       const response: ReqDelegationResponseDTO = {
@@ -104,7 +105,7 @@ export class CreditorController {
         request_id: dto.request_id,
         transaction_id: dto.transaction_id,
         reference_id: dto.reference_id,
-        request_date: dto.request_data,
+        request_date: dto.request_date,
         tx_hash: tx_hash as `0x${string}`,
         onchain_url,
       };
@@ -191,34 +192,39 @@ export class CreditorController {
     example: '123...',
   })
   @ApiQuery({
-    name: 'creditor_wallet_address',
+    name: 'creditor_code',
     required: true,
-    description: 'Unique wallet address of creditor.',
-    example: '0x...',
+    description: 'Unique code of creditor.',
+    example: '...',
   })
   async statusCreditorDelegation(
     @Query() dto: StatusCreditorDelegationDTO,
   ): Promise<WrapperResponseDTO<StatusDelegationResponseDTO>> {
     try {
-      const { nik, creditor_wallet_address } = dto;
+      const { nik, creditor_code } = dto;
       const status = await this.creditorService.getStatusCreditorDelegation(
         nik,
-        creditor_wallet_address,
+        creditor_code,
       );
-
-      const response: StatusDelegationResponseDTO = {
-        status,
-      };
 
       let message: string;
       switch (status) {
         case 'APPROVED':
           message = 'Delegation approved.';
+          break;
         case 'PENDING':
           message = 'Delegation pending.';
+          break;
         case 'REJECTED':
           message = 'Delegation rejected.';
+          break;
+        case 'NONE':
+          message = 'Delegation has none status.';
+          break;
       }
+      const response: StatusDelegationResponseDTO = {
+        status,
+      };
       this.logger.log('Request success.');
       return new WrapperResponseDTO(response, message);
     } catch (error) {
@@ -654,6 +660,63 @@ export class CreditorController {
       };
 
       return new WrapperResponseDTO(response, 'Get Creditor Data Success');
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  @ApiExtraModels(WrapperResponseDTO, GetCreditorResponseDTO)
+  @ApiOperation({
+    summary: 'Get Active Creditor by Status',
+    description: 'Get Active Creditor Data based on status.',
+  })
+  @ApiOkResponse({
+    description: 'Get Active Creditor success.',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(WrapperResponseDTO) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(GetCreditorResponseDTO) },
+            message: {
+              type: 'string',
+              example: 'Get Active Creditor success.',
+            },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation Error.',
+    schema: {
+      example: {
+        data: null,
+        messsage: 'Validation Error.',
+      },
+    },
+  })
+  @Get('active-creditor-by-status')
+  async getActiveCreditorByStatus(
+    @Query() dto: GetActiveCreditorByStatusDTO,
+  ): Promise<WrapperResponseDTO<GetActiveCreditorByStatusResponseDTO>> {
+    try {
+      const { debtor_nik, status } = dto;
+      const data = await this.creditorService.getActiveCreditorByStatus(
+        debtor_nik,
+        status,
+      );
+
+      const response: GetActiveCreditorByStatusResponseDTO = {
+        creditors: data as WalletAddressType[],
+      };
+
+      return new WrapperResponseDTO(response, 'success');
     } catch (error) {
       this.logger.error(error);
       throw error;

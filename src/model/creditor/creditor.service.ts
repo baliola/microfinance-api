@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ICreditorService } from './util/creditor.service.interface';
 import {
+  TransactionCommonType,
   TransactionResponseType,
   TransactionType,
   TypeKey,
@@ -19,6 +20,10 @@ import { VaultService } from 'src/providers/vault/vault';
 import { ConfigService } from '@nestjs/config';
 import { decrypt, encrypt } from 'src/utils/crypto';
 import { ContractTransactionResponse } from 'ethers';
+import {
+  convertToEnumValue,
+  getTransactionType,
+} from 'src/utils/function/get-status-delegation';
 @Injectable()
 export class CreditorService implements ICreditorService {
   constructor(
@@ -81,7 +86,7 @@ export class CreditorService implements ICreditorService {
     } catch (error: any) {
       this.logger.error(error);
       if (error.code) {
-        throw new BadRequestException('Debtor already exist.');
+        throw new BadRequestException('Creditor already exist.');
       }
       throw error;
     }
@@ -102,8 +107,11 @@ export class CreditorService implements ICreditorService {
         TypeKey.CREDITOR,
       );
 
+      const secret = this.configService.get<string>('CRYPTO_SECRET');
+      const decryptedPrivateKey = decrypt(privateKey, secret);
+
       const provider_wallet =
-        this.ethersService.generateWalletWithPrivateKey(privateKey);
+        this.ethersService.generateWalletWithPrivateKey(decryptedPrivateKey);
 
       if (is_approve && is_approve === true) {
         tx_hash = await this.ethersService.approveDelegation(
@@ -129,8 +137,13 @@ export class CreditorService implements ICreditorService {
       const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx_hash.hash}`;
 
       return { tx_hash: tx_hash.hash, status, onchain_url };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      if (error.action === 'estimateGas') {
+        throw new BadRequestException(
+          'Providers are unable to approve the request due to an estimate gas issue or the application status is not pending.',
+        );
+      }
       throw error;
     }
   }
@@ -141,10 +154,19 @@ export class CreditorService implements ICreditorService {
   ): Promise<TransactionType> {
     try {
       const tx = await this.ethersService.getStatusRequest(nik, creditor_code);
+      const statusTx = getTransactionType(tx);
 
-      return tx;
-    } catch (error) {
+      return statusTx;
+    } catch (error: any) {
       this.logger.error(error);
+      if (error.reason === 'NotEligible()') {
+        throw new BadRequestException(
+          'Creditor Code not eligible to check status delegation.',
+        );
+      }
+      if (error.reason === 'NikNeedRegistered()') {
+        throw new BadRequestException('NIK need to be registered first.');
+      }
       throw error;
     }
   }
@@ -153,40 +175,28 @@ export class CreditorService implements ICreditorService {
     nik: string,
     consumer_code: string,
     provider_code: string,
-    consumer_address: WalletAddressType,
     request_id?: string,
     transaction_id?: string,
     referenced_id?: string,
-    request_data?: string,
+    request_date?: string,
   ): Promise<CreateDelegationType> {
     try {
       let tx: any;
-      const privateKey = await this.vaultService.readPrivateKey(
-        consumer_address,
-        TypeKey.CREDITOR,
-      );
-      const secret = this.configService.get<string>('CRYPTO_SECRET');
-      const decryptedPrivateKey = decrypt(privateKey, secret);
-
-      const consumer_wallet =
-        this.ethersService.generateWalletWithPrivateKey(decryptedPrivateKey);
-      if (request_id && transaction_id && referenced_id && request_data) {
+      if (request_id && transaction_id && referenced_id && request_date) {
         tx = await this.ethersService.requestDelegationWithEvent(
           nik,
           consumer_code,
           provider_code,
-          consumer_wallet,
           request_id,
           transaction_id,
           referenced_id,
-          request_data,
+          request_date,
         );
       } else {
         tx = await this.ethersService.requestDelegation(
           nik,
           consumer_code,
           provider_code,
-          consumer_wallet,
         );
       }
 
@@ -315,6 +325,24 @@ export class CreditorService implements ICreditorService {
 
       return tx;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  async getActiveCreditorByStatus(
+    debtor_nik: string,
+    status: TransactionCommonType,
+  ): Promise<WalletAddressType[]> {
+    try {
+      const convertedStatus = convertToEnumValue(status);
+      const data = await this.ethersService.getActiveCreditorByStatus(
+        debtor_nik,
+        convertedStatus,
+      );
+
+      return data;
+    } catch (error) {
+      this.logger.error(error);
       throw error;
     }
   }

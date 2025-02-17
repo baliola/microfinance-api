@@ -1,10 +1,15 @@
-import { TransactionType, WalletAddressType } from 'src/utils/type/type';
+import {
+  TransactionCommonType,
+  TransactionType,
+  WalletAddressType,
+} from 'src/utils/type/type';
 import {
   AddDebtorToCreditorType,
   CreateDelegationType,
   DelegationApprovalType,
   PurchasePackageType,
   RegistrationServiceType,
+  RemoveCreditorType,
 } from './creditor-type.service';
 
 export interface ICreditorService {
@@ -60,4 +65,10 @@ export interface ICreditorService {
     end_date: string,
     quota: number,
   ): Promise<PurchasePackageType>;
+  getCreditor(creditor_code: string): Promise<WalletAddressType | null>;
+  removeCreditor(creditor_code: string): Promise<RemoveCreditorType>;
+  getActiveCreditorByStatus(
+    debtor_nik: string,
+    status: TransactionCommonType,
+  ): Promise<any>;
 }

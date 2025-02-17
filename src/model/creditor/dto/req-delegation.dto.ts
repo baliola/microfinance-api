@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { WalletAddressType } from 'src/utils/type/type';
 
 export class ReqCreditorDelegationDTO {
   @ApiProperty({
@@ -23,13 +22,6 @@ export class ReqCreditorDelegationDTO {
   })
   @IsString()
   creditor_provider_code: string;
-
-  @ApiProperty({
-    description: 'Creditor Consumer Unique Address.',
-    example: '...',
-  })
-  @IsString()
-  consumer_address: WalletAddressType;
 
   @ApiProperty({
     description: 'Unique Identifier of the request.',
@@ -56,10 +48,10 @@ export class ReqCreditorDelegationDTO {
   reference_id: string;
 
   @ApiProperty({
-    description: 'Request data',
+    description: 'Date of the request.',
     example: '...',
   })
   @IsString()
   @IsOptional()
-  request_data: string;
+  request_date: string;
 }
