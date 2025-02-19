@@ -299,7 +299,6 @@ export class CreditorController {
   ): Promise<WrapperResponseDTO<DelegationApprovalResponseDTO>> {
     try {
       const {
-        provider_address,
         debtor_nik,
         is_approve,
         creditor_consumer_code,
@@ -308,7 +307,6 @@ export class CreditorController {
 
       const { tx_hash, status, onchain_url } =
         await this.creditorService.delegationApproval(
-          provider_address,
           debtor_nik,
           is_approve,
           creditor_consumer_code,
