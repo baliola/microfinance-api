@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsDateString, IsString, IsUrl } from 'class-validator';
 
 export class AddDebtorToCreditorDTO {
   @ApiProperty({
@@ -34,27 +34,27 @@ export class AddDebtorToCreditorDTO {
     description: 'Date of application sent.',
     example: '...',
   })
-  @IsString()
+  @IsDateString()
   application_date: string;
 
   @ApiProperty({
     description: 'Date of application approved or rejected.',
     example: '...',
   })
-  @IsString()
+  @IsDateString()
   approval_date: string;
 
   @ApiProperty({
     description: 'Url of KTP.',
     example: 'https://...',
   })
-  @IsString()
+  @IsUrl()
   url_KTP: string;
 
   @ApiProperty({
     description: 'Url of Approval.',
     example: 'https://...',
   })
-  @IsString()
+  @IsUrl()
   url_approval: string;
 }

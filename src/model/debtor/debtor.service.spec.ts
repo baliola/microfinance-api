@@ -137,7 +137,6 @@ describe('DebtorService', () => {
       try {
         await service.registration(nik);
       } catch (error: any) {
-        console.log('error: ', error);
         // Expect the error to be a BadRequestException
         expect(error).toBeInstanceOf(BadRequestException);
         expect(error.message).toBe('Debtor already exist.');
@@ -184,7 +183,6 @@ describe('DebtorService', () => {
       try {
         await service.removeDebtor(nik);
       } catch (error: any) {
-        console.log('error: ', error);
         // Expect the error to be a BadRequestException
         expect(error).toBeInstanceOf(BadRequestException);
         expect(error.message).toBe('Debtor already removed.');

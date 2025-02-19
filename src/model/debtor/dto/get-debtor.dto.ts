@@ -7,5 +7,5 @@ export class GetDebtorDTO {
     example: '123...',
   })
   @IsString()
-  nik: string;
+  debtor_nik: string;
 }

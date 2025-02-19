@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class ReqCreditorDelegationDTO {
   @ApiProperty({
@@ -51,7 +51,7 @@ export class ReqCreditorDelegationDTO {
     description: 'Date of the request.',
     example: '...',
   })
-  @IsString()
+  @IsDateString()
   @IsOptional()
   request_date: string;
 }

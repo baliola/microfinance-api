@@ -6,7 +6,7 @@ export class LogActivityResponseDTO {
     description: 'Creditor who access the data',
     example: '0x...',
   })
-  creditor: WalletAddressType[];
+  creditors: WalletAddressType[];
 
   @ApiProperty({
     description: 'Status of the transaction (PENDING, APPROVED, REJECTED)',
