@@ -23,7 +23,6 @@ export interface ICreditorService {
     signer_position?: string,
   ): Promise<RegistrationServiceType>;
   delegationApproval(
-    provider_address: `0x${string}`,
     nik: string,
     is_approve: boolean,
     consumer_code: string,
