@@ -1,10 +1,10 @@
 import { Logger, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { VaultService } from './vault';
 
 @Module({
   imports: [ConfigModule.forRoot()],
-  providers: [VaultService, Logger],
+  providers: [VaultService, Logger, ConfigService],
   exports: [VaultService],
 })
 export class VaultModule {}

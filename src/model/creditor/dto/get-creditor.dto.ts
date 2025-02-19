@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 
-export class LogActivityDTO {
+export class GetCreditorDTO {
   @ApiProperty({
-    description: 'National Identification number.',
+    description: 'Creditor Unique Code.',
     example: '123...',
   })
   @IsString()
-  debtor_nik: string;
+  creditor_code: string;
 }

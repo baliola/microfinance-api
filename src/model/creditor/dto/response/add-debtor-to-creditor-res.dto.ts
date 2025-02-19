@@ -64,4 +64,10 @@ export class AddDebtorToCreditorResponseDTO {
   })
   @IsString()
   tx_hash: `0x${string}`;
+
+  @ApiProperty({
+    description: 'Base URL for the Onchain Registry API.',
+    example: '...',
+  })
+  onchain_url: string;
 }

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Client } from '@litehex/node-vault';
 import { ConfigService } from '@nestjs/config';
-import { TypeKey, VaultPrefix, WalletAddressType } from 'src/utils/type/type';
+import { TypeKey, VaultPrefix, WalletAddressType } from '../../utils/type/type';
 
 @Injectable()
 export class VaultService implements OnModuleInit, OnModuleDestroy {
@@ -105,6 +105,7 @@ export class VaultService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(
         `Error storing private key for address ${address}: ${error.message}`,
       );
+      throw error;
     }
   }
 

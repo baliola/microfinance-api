@@ -12,7 +12,11 @@ export class DelegationApprovalResponseDTO {
     description: 'Transaction hash of the transaction.',
     example: '0x123abc...',
   })
-  transaction_hash: `0x${string}`;
+  tx_hash: `0x${string}`;
 
-  message: string;
+  @ApiProperty({
+    description: 'Base URL for the Onchain Registry API.',
+    example: '...',
+  })
+  onchain_url: string;
 }

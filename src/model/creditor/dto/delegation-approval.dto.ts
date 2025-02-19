@@ -7,7 +7,7 @@ export class DelegationApprovalDTO {
     example: '123...',
   })
   @IsString()
-  customer_nik: string;
+  debtor_nik: string;
 
   @ApiProperty({
     description: 'Approval status (true or false).',
@@ -18,15 +18,15 @@ export class DelegationApprovalDTO {
 
   @ApiProperty({
     description: 'Unique code from creditor (consumer).',
-    example: '0x...',
+    example: '...',
   })
   @IsString()
-  consumer_code: string;
+  creditor_consumer_code: string;
 
   @ApiProperty({
     description: 'Unique code from creditor (provider).',
-    example: '0x...',
+    example: '...',
   })
   @IsString()
-  provider_code: string;
+  creditor_provider_code: string;
 }

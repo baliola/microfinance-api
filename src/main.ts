@@ -8,12 +8,14 @@ import helmet, { HelmetOptions } from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from './interceptors/response/response.interceptor';
+import { CustomExceptionFilter } from './common/errors/custom-http.exception';
+import { LoggingInterceptor } from './interceptors/logging/logging.interceptor';
 
 loadEnv();
 async function bootstrap() {
   const logger = new Logger();
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log'],
+    logger: ['error', 'warn', 'log', 'verbose', 'debug', 'fatal'],
   });
 
   // CORS Option.
@@ -71,6 +73,8 @@ async function bootstrap() {
   logger.log('Enabling Global Interceptors...');
   app.useGlobalInterceptors(new TimeInterceptor());
   app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new CustomExceptionFilter());
 
   // Swagger Docs.
   logger.log('Enabling Swagger Docs...');
