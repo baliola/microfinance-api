@@ -15,6 +15,7 @@ import {
   HDNodeWallet,
   verifyTypedData,
   ContractTransactionResponse,
+  ContractTransactionReceipt,
 } from 'ethers';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -198,7 +199,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   async addCreditor(
     creditor_code: string,
     creditor_address: Wallet,
-  ): Promise<ContractTransactionResponse> {
+  ): Promise<ContractTransactionReceipt> {
     try {
       const functionCall = this.contract.interface.encodeFunctionData(
         'addCreditor(bytes32,address)',
@@ -239,7 +240,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     approval_date: string,
     signer_name: string,
     signer_position: string,
-  ): Promise<ContractTransactionResponse> {
+  ): Promise<ContractTransactionReceipt> {
     try {
       const hashCreditorCode = keccak256(
         this.abiCoder.encode(['string'], [creditor_code]),
@@ -289,20 +290,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       );
 
       return await this.executeMetaTransaction(this.wallet, functionCall);
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
-    }
-  }
-
-  async getStatusRequest(nik: string, creditor_code: string) {
-    try {
-      const status = await this.contract.getStatusRequest(
-        keccak256(this.abiCoder.encode(['string'], [nik])),
-        keccak256(this.abiCoder.encode(['string'], [creditor_code])),
-      );
-
-      return status;
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -405,7 +392,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
    * ✅ Approve Delegation using MetaTransaction
    */
   async approveDelegation(
-    provider_wallet: Wallet,
     customer_nik: string,
     consumer_code: string,
     provider_code: string,
@@ -429,7 +415,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
 
       return await this.executeMetaTransaction(this.wallet, functionCall);
     } catch (error: any) {
-      console.log('error: ', error);
       if (!error.data) {
         this.logger.error('Error data is undefined:', error);
         throw error;
@@ -566,7 +551,6 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
 
       return data;
     } catch (error) {
-      console.log('error: ', error);
       this.logger.error(error);
       throw error;
     }
@@ -591,7 +575,8 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
         [hashNik, debtor_wallet.address],
       );
 
-      return await this.executeMetaTransaction(this.wallet, functionCall);
+      const tx = await this.executeMetaTransaction(this.wallet, functionCall);
+      return tx;
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -601,7 +586,7 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   /**
    * ✅ Remove debtor using MetaTransaction
    */
-  async removeDebtor(nik: string): Promise<ContractTransactionResponse> {
+  async removeDebtor(nik: string): Promise<ContractTransactionReceipt> {
     try {
       const functionCall = this.contract.interface.encodeFunctionData(
         'removeDebtor(bytes32)',
