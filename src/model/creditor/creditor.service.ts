@@ -6,7 +6,7 @@ import {
   TransactionType,
   TypeKey,
   WalletAddressType,
-} from 'src/utils/type/type';
+} from '../../utils/type/type';
 import { EthersService } from '../../providers/ethers/ethers';
 import {
   AddDebtorToCreditorType,
@@ -16,14 +16,14 @@ import {
   RegistrationServiceType,
   RemoveCreditorType,
 } from './util/creditor-type.service';
-import { VaultService } from 'src/providers/vault/vault';
+import { VaultService } from '../../providers/vault/vault';
 import { ConfigService } from '@nestjs/config';
-import { decrypt, encrypt } from 'src/utils/crypto';
-import { ContractTransactionResponse } from 'ethers';
+import { decrypt, encrypt } from '../../utils/crypto';
 import {
   convertToEnumValue,
   getTransactionType,
-} from 'src/utils/function/get-status-delegation';
+} from '../../utils/function/get-status-delegation';
+import { ContractTransactionReceipt } from 'ethers';
 @Injectable()
 export class CreditorService implements ICreditorService {
   constructor(
@@ -46,7 +46,7 @@ export class CreditorService implements ICreditorService {
       const wallet =
         this.ethersService.generateWalletWithPrivateKey(privateKey);
 
-      let tx_hash: ContractTransactionResponse;
+      let tx_hash: ContractTransactionReceipt;
       if (
         institution_code &&
         institution_name &&
@@ -85,7 +85,10 @@ export class CreditorService implements ICreditorService {
       };
     } catch (error: any) {
       this.logger.error(error);
-      if (error.code) {
+      if (
+        error.code === 'CALL_EXCEPTION' &&
+        error.shortMessage.includes('execution reverted (unknown custom error)')
+      ) {
         throw new BadRequestException('Creditor already exist.');
       }
       throw error;
@@ -93,7 +96,6 @@ export class CreditorService implements ICreditorService {
   }
 
   async delegationApproval(
-    provider_address: `0x${string}`,
     nik: string,
     is_approve: boolean,
     consumer_code: string,
@@ -102,20 +104,9 @@ export class CreditorService implements ICreditorService {
     try {
       let tx_hash: any;
       let status: TransactionResponseType;
-      const privateKey = await this.vaultService.readPrivateKey(
-        provider_address,
-        TypeKey.CREDITOR,
-      );
-
-      const secret = this.configService.get<string>('CRYPTO_SECRET');
-      const decryptedPrivateKey = decrypt(privateKey, secret);
-
-      const provider_wallet =
-        this.ethersService.generateWalletWithPrivateKey(decryptedPrivateKey);
 
       if (is_approve && is_approve === true) {
         tx_hash = await this.ethersService.approveDelegation(
-          provider_wallet,
           nik,
           consumer_code,
           provider_code,
@@ -125,7 +116,6 @@ export class CreditorService implements ICreditorService {
         status = 'APPROVED';
       } else {
         tx_hash = await this.ethersService.approveDelegation(
-          provider_wallet,
           nik,
           consumer_code,
           provider_code,
@@ -153,7 +143,10 @@ export class CreditorService implements ICreditorService {
     creditor_code: string,
   ): Promise<TransactionType> {
     try {
-      const tx = await this.ethersService.getStatusRequest(nik, creditor_code);
+      const tx = await this.ethersService.getStatusDelegation(
+        nik,
+        creditor_code,
+      );
       const statusTx = getTransactionType(tx);
 
       return statusTx;
@@ -340,9 +333,13 @@ export class CreditorService implements ICreditorService {
         convertedStatus,
       );
 
+      console.log('data: ', data);
       return data;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      if (error.reason === 'NikNeedRegistered()') {
+        throw new BadRequestException('NIK need to be registered first.');
+      }
       throw error;
     }
   }
