@@ -1,11 +1,4 @@
 import { ResponseInterceptor } from './response.interceptor';
-
-describe('ResponseInterceptor', () => {
-  it('should be defined', () => {
-    expect(new ResponseInterceptor()).toBeDefined();
-  });
-});
-import { ResponseInterceptor } from './response.interceptor';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { of } from 'rxjs';
 
