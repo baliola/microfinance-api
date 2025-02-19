@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString } from 'class-validator';
+import { IsDateString, IsNumber, IsString } from 'class-validator';
 import { WalletAddressType } from 'src/utils/type/type';
 
 export class PurchasePackageDTO {
@@ -49,14 +49,14 @@ export class PurchasePackageDTO {
     description: 'Date of Package Start.',
     example: 'YYYY-MM-DD',
   })
-  @IsString()
+  @IsDateString()
   start_date: string;
 
   @ApiProperty({
     description: 'Date of Package End.',
     example: 'YYYY-MM-DD',
   })
-  @IsString()
+  @IsDateString()
   end_date: string;
 
   @ApiProperty({

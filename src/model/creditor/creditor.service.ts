@@ -333,7 +333,6 @@ export class CreditorService implements ICreditorService {
         convertedStatus,
       );
 
-      console.log('data: ', data);
       return data;
     } catch (error: any) {
       this.logger.error(error);

@@ -714,7 +714,10 @@ export class CreditorController {
         creditors: data as WalletAddressType[],
       };
 
-      return new WrapperResponseDTO(response, 'success');
+      return new WrapperResponseDTO(
+        response,
+        'Get Active Creditors by Status success.',
+      );
     } catch (error) {
       this.logger.error(error);
       throw error;

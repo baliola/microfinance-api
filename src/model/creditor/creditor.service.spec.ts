@@ -165,7 +165,6 @@ describe('CreditorService', () => {
       try {
         await service.registration(creditor_code);
       } catch (error: any) {
-        console.log('error: ', error);
         // Expect the error to be a BadRequestException
         expect(error).toBeInstanceOf(BadRequestException);
         expect(error.message).toBe('Creditor already exist.');
@@ -239,7 +238,6 @@ describe('CreditorService', () => {
       try {
         await service.removeCreditor(creditor_code);
       } catch (error: any) {
-        console.log('error: ', error);
         // Expect the error to be a BadRequestException
         expect(error).toBeInstanceOf(BadRequestException);
         expect(error.message).toBe('Creditor already removed.');
@@ -291,7 +289,6 @@ describe('CreditorService', () => {
         quota,
       );
 
-      console.log('data: ', data);
       expect(data).toBeDefined();
       expect(data).toHaveProperty('tx_hash');
       expect(data).toHaveProperty('onchain_url');
@@ -436,7 +433,6 @@ describe('CreditorService', () => {
           creditor_provider_code,
         );
       } catch (error: any) {
-        console.log('error: ', error);
         // Expect the error to be a BadRequestException
         expect(error).toBeInstanceOf(BadRequestException);
         expect(error.message).toBe(
@@ -476,7 +472,6 @@ describe('CreditorService', () => {
       try {
         await service.getStatusCreditorDelegation(nik, creditor_code);
       } catch (error: any) {
-        console.log('error: ', error);
         // Expect the error to be a BadRequestException
         expect(error).toBeInstanceOf(BadRequestException);
         expect(error.message).toBe(
@@ -511,7 +506,6 @@ describe('CreditorService', () => {
         .mockResolvedValue([['0x22E71ae8f747585c646ebE6FCe7f96A7923D7F8F']]);
 
       const data = await service.getActiveCreditorByStatus(debtor_nik, status);
-      console.log('data: ', data);
       expect(data).toEqual([['0x22E71ae8f747585c646ebE6FCe7f96A7923D7F8F']]);
     });
 
@@ -527,7 +521,6 @@ describe('CreditorService', () => {
       try {
         await service.getActiveCreditorByStatus(debtor_nik, status);
       } catch (error: any) {
-        console.log('error: ', error);
         // Expect the error to be a BadRequestException
         expect(error).toBeInstanceOf(BadRequestException);
         expect(error.message).toBe('NIK need to be registered first.');

@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class RegistrationCreditorDTO {
   @ApiProperty({
@@ -7,6 +12,7 @@ export class RegistrationCreditorDTO {
     example: '123...',
   })
   @IsString()
+  @IsNotEmpty()
   creditor_code: string;
 
   @ApiProperty({
@@ -29,7 +35,7 @@ export class RegistrationCreditorDTO {
     description: 'Date of the Approval.',
     example: '...',
   })
-  @IsString()
+  @IsDateString()
   @IsOptional()
   approval_date: string;
 
