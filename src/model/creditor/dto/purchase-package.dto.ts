@@ -33,14 +33,14 @@ export class PurchasePackageDTO {
 
   @ApiProperty({
     description: 'Unique Number as Identity of the Package.',
-    example: '...',
+    example: 0,
   })
   @IsNumber()
   package_id: number;
 
   @ApiProperty({
     description: 'Number of Package Quantity.',
-    example: '...',
+    example: 0,
   })
   @IsNumber()
   quantity: number;
@@ -61,7 +61,7 @@ export class PurchasePackageDTO {
 
   @ApiProperty({
     description: 'Number of Quota',
-    example: '..',
+    example: 0,
   })
   @IsNumber()
   quota: number;
