@@ -71,7 +71,6 @@ export class DebtorService implements IDebtorService {
       return { wallet_address: address, tx_hash: tx.hash, onchain_url };
     } catch (error: any) {
       this.logger.error(error);
-      console.log('error: ', error);
       if (
         error.code === 'CALL_EXCEPTION' &&
         error.shortMessage.includes('execution reverted (unknown custom error)')
