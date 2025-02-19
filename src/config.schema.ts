@@ -1,4 +1,7 @@
+import { Logger } from '@nestjs/common';
 import z from 'zod';
+
+const logger = new Logger();
 
 export const configValidationSchema = z.object({
   NODE_ENV: z.string().default('development'),
@@ -31,7 +34,7 @@ export const validatedConfig = () => {
   const parsed = configValidationSchema.safeParse(process.env);
 
   if (!parsed.success) {
-    console.error('❌ Invalid environment variables:', parsed.error.format());
+    logger.error('❌ Invalid environment variables:', parsed.error.format());
     process.exit(1);
   }
 
