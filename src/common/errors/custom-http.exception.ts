@@ -6,17 +6,6 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 
-function isErrorResponse(
-  obj: any,
-): obj is { message: string; customCode?: number } {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'message' in obj &&
-    typeof obj.message === 'string'
-  );
-}
-
 @Catch(HttpException)
 export class CustomExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
@@ -29,17 +18,26 @@ export class CustomExceptionFilter implements ExceptionFilter {
       : HttpStatus.INTERNAL_SERVER_ERROR;
 
     // ✅ Fix: Ensure `exception.getResponse()` is properly handled
-    const exceptionResponse = exception.getResponse()
-      ? exception.getResponse()
+    const exceptionResponse = exception.getResponse
+      ? (exception.getResponse() as { message?: string | string[] })
       : { message: 'Internal server error' };
 
+    let message: string | string[];
+
     // ✅ Fix: Handle both string and object responses
-    const message =
-      typeof exceptionResponse === 'string'
-        ? exceptionResponse
-        : isErrorResponse(exceptionResponse)
-          ? exceptionResponse.message
-          : 'Internal server error';
+    if (typeof exceptionResponse === 'string') {
+      message = exceptionResponse;
+    } else if (
+      typeof exceptionResponse === 'object' &&
+      'message' in exceptionResponse
+    ) {
+      // If `message` is an array, return it directly
+      message = Array.isArray(exceptionResponse.message)
+        ? exceptionResponse.message
+        : exceptionResponse.message;
+    } else {
+      message = 'Internal server error';
+    }
 
     response.status(status).json({
       data: null,
