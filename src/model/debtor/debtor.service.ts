@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { IDebtorService } from './util/debtor.service.interface';
-import { EthersService } from 'src/providers/ethers/ethers';
+import { EthersService } from '../../providers/ethers/ethers';
 import {
   RegistrationServiceType,
   RemoveDebtorType,
 } from './util/debtor-type.service';
 import { LogActivityType } from './util/debtor-type.service';
-import { VaultService } from 'src/providers/vault/vault';
-import { TypeKey, WalletAddressType } from 'src/utils/type/type';
-import { encrypt } from 'src/utils/crypto';
+import { VaultService } from '../../providers/vault/vault';
+import { TypeKey, WalletAddressType } from '../../utils/type/type';
+import { encrypt } from '../../utils/crypto';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -22,15 +22,25 @@ export class DebtorService implements IDebtorService {
   async getLogActivity(nik: string): Promise<LogActivityType> {
     try {
       const log = await this.ethersService.getLogData(nik);
-      const statusMap: Record<number, 'REJECTED' | 'APPROVED' | 'PENDING'> = {
-        0: 'REJECTED',
-        1: 'APPROVED',
-        2: 'PENDING',
+      if (!log || log[0].length === 0 || log[1].length === 0) {
+        return { wallet_address: null, status: null };
+      }
+
+      const statusMap: Record<
+        number,
+        'NONE' | 'REJECTED' | 'APPROVED' | 'PENDING'
+      > = {
+        0: 'NONE',
+        1: 'REJECTED',
+        2: 'APPROVED',
+        3: 'PENDING',
       };
 
       const data = {
-        wallet_address: log[0],
-        status: log[1].map((value) => statusMap[value]),
+        wallet_address: log[0] || null,
+        status: Array.isArray(log[1])
+          ? log[1].map((value: number) => statusMap[value])
+          : [],
       };
 
       return data;
@@ -45,7 +55,7 @@ export class DebtorService implements IDebtorService {
       const { address, privateKey } = this.ethersService.generateHDNodeWallet();
       const wallet =
         this.ethersService.generateWalletWithPrivateKey(privateKey);
-      const { hash } = await this.ethersService.addDebtor(nik, wallet);
+      const tx = await this.ethersService.addDebtor(nik, wallet);
 
       const secret = this.configService.get<string>('CRYPTO_SECRET');
       const encryptedData = encrypt(privateKey, secret);
@@ -56,12 +66,16 @@ export class DebtorService implements IDebtorService {
         TypeKey.DEBTOR,
       );
 
-      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${hash}`;
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx.hash}`;
 
-      return { wallet_address: address, tx_hash: hash, onchain_url };
+      return { wallet_address: address, tx_hash: tx.hash, onchain_url };
     } catch (error: any) {
       this.logger.error(error);
-      if (error.code) {
+      console.log('error: ', error);
+      if (
+        error.code === 'CALL_EXCEPTION' &&
+        error.shortMessage.includes('execution reverted (unknown custom error)')
+      ) {
         throw new BadRequestException('Debtor already exist.');
       }
       throw error;
