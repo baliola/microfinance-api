@@ -7,8 +7,8 @@ export type RegistrationServiceType = {
 };
 
 export type LogActivityType = {
-  wallet_address: WalletAddressType[];
-  status: TransactionType[];
+  wallet_address: WalletAddressType[] | null;
+  status: TransactionType[] | null;
 };
 
 export type RemoveDebtorType = {
