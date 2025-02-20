@@ -1,8 +1,8 @@
 import { Logger, Module } from '@nestjs/common';
 import { CreditorController } from './creditor.controller';
 import { CreditorService } from './creditor.service';
-import { EthersService } from 'src/providers/ethers/ethers';
-import { VaultService } from 'src/providers/vault/vault';
+import { EthersService } from '../../providers/ethers/ethers';
+import { VaultService } from '../../providers/vault/vault';
 
 @Module({
   controllers: [CreditorController],
