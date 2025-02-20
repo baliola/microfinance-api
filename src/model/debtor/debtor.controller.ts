@@ -19,13 +19,13 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { LogActivityResponseDTO } from './dto/response/log-activity-response.dto';
-import { WrapperResponseDTO } from '../../common/helper/response';
 import { RegistrationDebtorResponseDTO } from './dto/response/registration-res.dto';
 import { DebtorService } from './debtor.service';
 import { RemoveDebtorDTO } from './dto/remove-debtor.dto';
 import { RemoveDebtorResponseDTO } from './dto/response/remove-debtor-res.dto';
 import { GetDebtorDTO } from './dto/get-debtor.dto';
 import { GetDebtorResponseDTO } from './dto/response/get-debtor-res.dto';
+import { WrapperResponseDTO } from '../../common/helper/response';
 
 @Controller('/api/debtor')
 export class DebtorController {
@@ -70,11 +70,47 @@ export class DebtorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: ['debtor_nik must be a string'],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          DebtorNotRegisterError: {
+            summary: 'Debtor not register error',
+            value: {
+              data: null,
+              message: 'Debtor need to registered first.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -127,11 +163,47 @@ export class DebtorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: [''],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: ['debtor_nik must be a string'],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          DebtorAlreadyExists: {
+            summary: 'Debtor Already Exists Error',
+            value: {
+              data: null,
+              message: 'Debtor already exists.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -165,31 +237,71 @@ export class DebtorController {
   })
   @ApiOkResponse({
     description: 'Removing debtor success.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(WrapperResponseDTO) },
-        {
-          properties: {
-            data: { $ref: getSchemaPath(RemoveDebtorResponseDTO) },
-            message: {
-              type: 'string',
-              example: 'Removing Debtor success.',
+    content: {
+      'application/json': {
+        schema: {
+          allOf: [
+            { $ref: getSchemaPath(WrapperResponseDTO) },
+            {
+              properties: {
+                data: { $ref: getSchemaPath(RemoveDebtorResponseDTO) },
+                message: {
+                  type: 'string',
+                  example: 'Removing Debtor success.',
+                },
+                timestamp: {
+                  type: 'string',
+                  example: 'YYYY-MM-DDT00:00:00.000Z',
+                },
+              },
             },
-            timestamp: {
-              type: 'string',
-              example: 'YYYY-MM-DDT00:00:00.000Z',
-            },
-          },
+          ],
         },
-      ],
+      },
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: ['debtor_nik must be a string'],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          DebtorRemoveError: {
+            summary: 'Debtor Already Remove Error',
+            value: {
+              data: null,
+              message: 'Debtor already removed or not registered yet.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -222,32 +334,84 @@ export class DebtorController {
     description: 'Get Debtor Data.',
   })
   @ApiOkResponse({
-    description: 'Get Debtor success.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(WrapperResponseDTO) },
-        {
-          properties: {
-            data: { $ref: getSchemaPath(GetDebtorResponseDTO) },
-            message: {
-              type: 'string',
-              example: 'Get Debtor success.',
+    description: 'Get debtor success.',
+    content: {
+      'application/json': {
+        schema: {
+          oneOf: [
+            { $ref: getSchemaPath(WrapperResponseDTO) },
+            {
+              properties: {
+                data: { $ref: getSchemaPath(GetDebtorResponseDTO) },
+                message: {
+                  type: 'string',
+                  example: 'Get Debtor success.',
+                },
+                timestamp: {
+                  type: 'string',
+                  example: 'YYYY-MM-DDT00:00:00.000Z',
+                },
+              },
             },
-            timestamp: {
-              type: 'string',
-              example: 'YYYY-MM-DDT00:00:00.000Z',
+          ],
+        },
+        examples: {
+          DebtorExist: {
+            summary: 'Debtor Exist',
+            value: {
+              data: {
+                wallet_address: '0x...',
+              },
+              message: 'Get Debtor Data success.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          DebtorNotExist: {
+            summary: 'Debtor Not Exist',
+            value: {
+              data: null,
+              message: 'Get Debtor Data success.',
+              timestamp: '2024-02-20T03:22:52.300Z',
             },
           },
         },
-      ],
+      },
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: ['debtor_nik must be a string'],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })

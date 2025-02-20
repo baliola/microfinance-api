@@ -131,7 +131,7 @@ export class CreditorService implements ICreditorService {
       this.logger.error(error);
       if (error.action === 'estimateGas') {
         throw new BadRequestException(
-          'Providers are unable to approve the request due to an estimate gas issue or the application status is not pending.',
+          'Providers are unable to approve the request due to an estimate gas issue or the application status is not pending or NIK not registered.',
         );
       }
       throw error;
@@ -206,8 +206,13 @@ export class CreditorService implements ICreditorService {
         tx_hash: tx.hash,
         onchain_url,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      if (error.code === 'CALL_EXCEPTION') {
+        throw new BadRequestException(
+          'Delegation already requested or the debtor and creditors not exist.',
+        );
+      }
       throw error;
     }
   }
@@ -248,8 +253,11 @@ export class CreditorService implements ICreditorService {
         tx_hash: tx.hash,
         onchain_url,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      if (error.code === 'CALL_EXCEPTION') {
+        throw new BadRequestException('Debtor already add to Creditor.');
+      }
       throw error;
     }
   }
@@ -263,8 +271,11 @@ export class CreditorService implements ICreditorService {
     } catch (error: any) {
       this.logger.error(error);
       if (error.code) {
-        throw new BadRequestException('Creditor already removed.');
+        throw new BadRequestException(
+          'Creditor already removed or not registered yet.',
+        );
       }
+      throw error;
     }
   }
 

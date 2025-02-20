@@ -73,11 +73,56 @@ export class CreditorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: [
+                'debtor_nik must be a string',
+                'creditor_consumer_code must be a string',
+                'creditor_provider_code must be a string',
+                'request_id must be a string',
+                'transaction_id must be a string',
+                'reference_id must be a string',
+                'request_date must be a valid ISO 8601 date string',
+              ],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          DelegationError: {
+            summary: 'Delegation Error',
+            value: {
+              data: null,
+              message:
+                'Delegation already requested or the debtor and creditors not exist.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -175,11 +220,47 @@ export class CreditorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          CreditorNotEligibleError: {
+            summary: 'Creditor Not Eligible Error',
+            value: {
+              data: null,
+              message: 'Creditor Code not eligible to check status delegation.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          NIKNotRegisterError: {
+            summary: 'NIK Not Registered Error',
+            value: {
+              data: null,
+              message: 'NIK need to be registered first.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -284,11 +365,53 @@ export class CreditorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          DuplicateApprovalError: {
+            summary: 'Duplicate Approval Error',
+            value: {
+              data: null,
+              message:
+                'Providers are unable to approve the request due to an estimate gas issue or the application status is not pending or NIK not registered.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: [
+                'debtor_nik must be a string',
+                'is_approve must be a boolean value',
+                'creditor_consumer_code must be a string',
+                'creditor_provider_code must be a string',
+              ],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -353,11 +476,54 @@ export class CreditorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: [
+                'creditor_code must be a string',
+                'institution_code must be a string',
+                'institution_name must be a string',
+                'approval_date must be a valid ISO 8601 date string',
+                'signer_name must be a string',
+                'signer_position must be a string',
+              ],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          CreditorAlreadyExist: {
+            summary: 'Creditor Already Exists Error',
+            value: {
+              data: null,
+              message: 'Creditor already exists.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -424,11 +590,56 @@ export class CreditorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: [
+                'debtor_nik must be a string',
+                'debtor_name must be a string',
+                'creditor_code must be a string',
+                'creditor_name must be a string',
+                'application_date must be a valid ISO 8601 date string',
+                'approval_date must be a valid ISO 8601 date string',
+                'url_KTP must be a URL address',
+                'url_approval must be a URL address',
+              ],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          DebtorAlreadyAddError: {
+            summary: 'Debtor Already Add Error',
+            value: {
+              data: null,
+              message: 'Debtor already add to Creditor.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -500,11 +711,47 @@ export class CreditorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Creditor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['creditor_code must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: ['creditor_code must be a string'],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          DebtorRemoveError: {
+            summary: 'Creditor Already Remove Error',
+            value: {
+              data: null,
+              message: 'Creditor already removed or not registered yet.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -557,11 +804,49 @@ export class CreditorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: [
+                'creditor_address must be a string',
+                'institution_code must be a string',
+                'purchase_date must be a string',
+                'invoice_number must be a string',
+                'package_id must be a number conforming to the specified constraints',
+                'quantity must be a number conforming to the specified constraints',
+                'start_date must be a valid ISO 8601 date string',
+                'end_date must be a valid ISO 8601 date string',
+                'quota must be a number conforming to the specified constraints',
+              ],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -613,32 +898,84 @@ export class CreditorController {
     description: 'Get Creditor Data.',
   })
   @ApiOkResponse({
-    description: 'Get Creditor success.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(WrapperResponseDTO) },
-        {
-          properties: {
-            data: { $ref: getSchemaPath(GetCreditorResponseDTO) },
-            message: {
-              type: 'string',
-              example: 'Get Creditor success.',
+    description: 'Get debtor success.',
+    content: {
+      'application/json': {
+        schema: {
+          oneOf: [
+            { $ref: getSchemaPath(WrapperResponseDTO) },
+            {
+              properties: {
+                data: { $ref: getSchemaPath(GetCreditorResponseDTO) },
+                message: {
+                  type: 'string',
+                  example: 'Get Creditor success.',
+                },
+                timestamp: {
+                  type: 'string',
+                  example: 'YYYY-MM-DDT00:00:00.000Z',
+                },
+              },
             },
-            timestamp: {
-              type: 'string',
-              example: 'YYYY-MM-DDT00:00:00.000Z',
+          ],
+        },
+        examples: {
+          DebtorExist: {
+            summary: 'Creditor Exist',
+            value: {
+              data: {
+                wallet_address: '0x...',
+              },
+              message: 'Get Creditor Data success.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+          DebtorNotExist: {
+            summary: 'Creditor Not Exist',
+            value: {
+              data: null,
+              message: 'Get Creditor Data success.',
+              timestamp: '2024-02-20T03:22:52.300Z',
             },
           },
         },
-      ],
+      },
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Creditor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['creditor_code must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: ['creditor_code must be a string'],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })
@@ -676,7 +1013,16 @@ export class CreditorController {
         { $ref: getSchemaPath(WrapperResponseDTO) },
         {
           properties: {
-            data: { $ref: getSchemaPath(GetCreditorResponseDTO) },
+            data: {
+              type: 'object',
+              properties: {
+                creditors: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['0x...', '0x...', '0x...'],
+                },
+              },
+            },
             message: {
               type: 'string',
               example: 'Get Active Creditor success.',
@@ -691,11 +1037,39 @@ export class CreditorController {
     },
   })
   @ApiBadRequestResponse({
-    description: 'Validation Error.',
-    schema: {
-      example: {
-        data: null,
-        messsage: 'Validation Error.',
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          NIKNotRegisterError: {
+            summary: 'NIK Not Registered Error',
+            value: {
+              data: null,
+              message: 'NIK need to be registered first.',
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
       },
     },
   })

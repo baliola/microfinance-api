@@ -44,8 +44,14 @@ export class DebtorService implements IDebtorService {
       };
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      if (
+        error.code === 'CALL_EXCEPTION' &&
+        error.reason === 'NikNeedRegistered()'
+      ) {
+        throw new BadRequestException('Debtor need to registered first.');
+      }
       throw error;
     }
   }
@@ -91,7 +97,9 @@ export class DebtorService implements IDebtorService {
     } catch (error: any) {
       this.logger.error(error);
       if (error.code) {
-        throw new BadRequestException('Debtor already removed.');
+        throw new BadRequestException(
+          'Debtor already removed or not registered yet.',
+        );
       }
       throw error;
     }
