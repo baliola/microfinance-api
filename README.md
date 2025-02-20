@@ -14,7 +14,7 @@ This project involves the collaborative integration of services between Mandala 
 
 ## ⚡️ Quick Start
 
-### Prerequisites
+### 📋 Prerequisites
 
 - **Node.JS `22.12.0`** : A JavaScript runtime that allows developers to run JavaScript on the server-side. Node.js provides a rich library of modules that simplifies the development of web applications.
 - **TypeScript `^5.1.3`** : A superset of JavaScript that allows specifying the types of data being passed around within the code, and has the ability to report errors when the types don't match.
@@ -27,7 +27,7 @@ The project also uses some packages like:
 
 $~$
 
-## Initial Setup
+## 💻 Initial Setup
 
 ### Development Environment Setup
 
@@ -78,7 +78,7 @@ $~$
   yarn start:prod
 ```
 
-## Test Case
+## 🧪 Test Case
 For running test with several options, you can use command test:
 
 ```
