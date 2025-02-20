@@ -5,8 +5,9 @@ export class WrapperResponseDTO<T> {
     description: 'Response data containing the main payload.',
     type: Object,
     isArray: true,
+    nullable: true,
   })
-  data: T;
+  data?: T | null;
 
   @ApiProperty({
     description: 'Additional information or message about the response.',
