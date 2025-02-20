@@ -10,6 +10,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from './interceptors/response/response.interceptor';
 import { CustomExceptionFilter } from './common/errors/custom-http.exception';
 import { LoggingInterceptor } from './interceptors/logging/logging.interceptor';
+import { WrapperResponseDTO } from './common/helper/response';
 
 loadEnv();
 async function bootstrap() {
@@ -84,9 +85,10 @@ async function bootstrap() {
       'Documentation of API that interact on Microfinance based on DJoin Case',
     )
     .setVersion('1.0.0')
-    .addBearerAuth()
     .build();
-  const doc = SwaggerModule.createDocument(app, swaggerOptions);
+  const doc = SwaggerModule.createDocument(app, swaggerOptions, {
+    extraModels: [WrapperResponseDTO],
+  });
   SwaggerModule.setup('docs', app, doc);
   Logger.log(
     `Swagger Docs can be access on ${process.env.WEB_URL}://${process.env.HOST}:${process.env.PORT}/docs`,
