@@ -26,7 +26,6 @@ import { RemoveDebtorResponseDTO } from './dto/response/remove-debtor-res.dto';
 import { GetDebtorDTO } from './dto/get-debtor.dto';
 import { GetDebtorResponseDTO } from './dto/response/get-debtor-res.dto';
 import { WrapperResponseDTO } from '../../common/helper/response';
-import { ErrorResponseDTO } from '../../common/errors/error-response.dto';
 
 @Controller('/api/debtor')
 export class DebtorController {
@@ -75,7 +74,24 @@ export class DebtorController {
     content: {
       'application/json': {
         schema: {
-          oneOf: [{ $ref: getSchemaPath(ErrorResponseDTO) }],
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
         },
         examples: {
           ValidationError: {
