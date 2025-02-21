@@ -1,99 +1,86 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+<div align="center">
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# Microfinance API
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+![TypeScript version](https://img.shields.io/badge/TypeScript-5.1.3%2B-007ACC?style=for-the-badge&logo=typescript)
+![Ethers version](https://img.shields.io/badge/ethers-6.13.5-white?style=for-the-badge&logo=ethers)
+![NestJS version](https://img.shields.io/badge/nestjs-10.4.9-red?style=for-the-badge&logo=nestjs)
+![Vault version](https://img.shields.io/badge/vault-6.13.5-yellow?style=for-the-badge&logo=hashicorp)
+![Documentation](https://img.shields.io/badge/docs-Google%20Docs-FEBE10?style=for-the-badge)
 
-## Description
+This project involves the collaborative integration of services between Mandala Chain and the DJoin Kocek platform. This integration will be carried out by Baliola and DJoin. This project is a component of research and development efforts for the DJoin Kocek service, utilizing Mandala Chain technology. The integration will be based on API communication with a blockchain node.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+</div>
 
-## Project setup
+## ⚡️ Quick Start
 
-```bash
-$ yarn install
-```
+### 📋 Prerequisites
 
-## Compile and run the project
+- **Node.JS `22.12.0`** : A JavaScript runtime that allows developers to run JavaScript on the server-side. Node.js provides a rich library of modules that simplifies the development of web applications.
+- **TypeScript `^5.1.3`** : A superset of JavaScript that allows specifying the types of data being passed around within the code, and has the ability to report errors when the types don't match.
 
-```bash
-# development
-$ yarn run start
+The project also uses some packages like:
 
-# watch mode
-$ yarn run start:dev
+- **Nest.JS `10.4.9`** : A framework for building efficient, scalable Node.js server-side applications. It uses progressive JavaScript, is built with and fully supports TypeScript (yet still enables developers to code in pure JavaScript) and combines elements of OOP (Object Oriented Programming), FP (Functional Programming), and FRP (Functional Reactive Programming).
+- **Ethers `^6.13.5`** : A complete and compact library for interacting with the Ethereum Blockchain and its ecosystem.
+- **@litehex/node-vault `^1.0.2`** : A JavaScript/TypeScript library that helps app interact with Vault by HashiCorp and it acts as a bridge between your code and Vault.
 
-# production mode
-$ yarn run start:prod
-```
+$~$
 
-## Run tests
+## 💻 Initial Setup
+
+### Development Environment Setup
+
+1. **Install Dependencies**: Run the following command to install all necessary dependencies:
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+  yarn install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+2. **Run Vault Server Locally**: Run the following command to make the Vault Server run:
 
 ```bash
-$ yarn install -g mau
-$ mau deploy
+  yarn vault:start
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+3. **Blockchain Node Active**: Make sure blockchain node that integrated with API is on and smart contract already deployed.
+4. **Copy DataSharing.json**: Copy file `DataSharing.json` to folder `src/artifact`
 
-## Resources
+5. **Run Server**: Run the following command to run the server
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+  yarn start:dev
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+$~$
 
-## Support
+### Production Environment Setup
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+1. **Install Dependencies**: Run the following command to install all necessary dependencies:
 
-## Stay in touch
+```bash
+  yarn install
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+2. **Run Vault Server Locally**: Run the following command to make the Vault Server run:
+3. **Compile the Code**: Compile the code for production environment by running this command:
 
-## License
+```bash
+  yarn build
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+4. **Blockchain Node Active**: Make sure blockchain node that integrated with API is on and smart contract already deployed.
+5. **Copy DataSharing.json**: Copy file `DataSharing.json` to folder `src/artifact`
+
+6. **Run Server**: Run the following command to run the server
+
+```bash
+  yarn start:prod
+```
+
+## 🧪 Test Case
+For running test with several options, you can use command test:
+
+```
+  yarn test:watch
+```
