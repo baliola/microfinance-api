@@ -979,10 +979,10 @@ export class CreditorController {
       },
     },
   })
-  @Post('get-creditor')
+  @Get('get-creditor')
   @HttpCode(HttpStatus.OK)
   async getCreditor(
-    @Body() dto: GetCreditorDTO,
+    @Query() dto: GetCreditorDTO,
   ): Promise<WrapperResponseDTO<GetCreditorResponseDTO>> {
     try {
       const { creditor_code } = dto;
