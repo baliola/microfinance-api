@@ -1,0 +1,9 @@
+services:
+  microfinance-api:
+    build:
+      context: .
+    restart: always
+    ports:
+      - "3101:3000"
+    volumes:
+      - './:/app'
