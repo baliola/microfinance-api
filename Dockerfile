@@ -3,13 +3,13 @@ FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+COPY package.json pnpm-lock.yaml ./
 
-RUN yarn install --frozen-lockfile
+RUN pnpm install
 
 COPY . .
 
-RUN yarn build
+RUN pnpm build
 
 ## Seperate image for runtime
 FROM node:${NODE_VERSION}-alpine
@@ -23,4 +23,4 @@ COPY --from=build /app/package.json ./package.json
 EXPOSE 8080
 
 # Start the application
-CMD [ "yarn", "start:prod" ]
+CMD [ "pnpm", "start:prod" ]
