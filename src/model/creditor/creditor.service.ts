@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ICreditorService } from './util/creditor.service.interface';
 import {
-  TransactionCommonType,
   TransactionResponseType,
   TransactionType,
   TypeKey,
@@ -19,10 +18,7 @@ import {
 import { VaultService } from '../../providers/vault/vault';
 import { ConfigService } from '@nestjs/config';
 import { decrypt, encrypt } from '../../utils/crypto';
-import {
-  convertToEnumValue,
-  getTransactionType,
-} from '../../utils/function/get-status-delegation';
+import { getTransactionType } from '../../utils/function/get-status-delegation';
 import { ContractTransactionReceipt } from 'ethers';
 @Injectable()
 export class CreditorService implements ICreditorService {
@@ -97,32 +93,25 @@ export class CreditorService implements ICreditorService {
 
   async delegationApproval(
     nik: string,
-    is_approve: boolean,
     consumer_code: string,
     provider_code: string,
+    request_id: string,
+    transaction_id: string,
+    reference_id: string,
+    request_date: string,
   ): Promise<DelegationApprovalType> {
     try {
-      let tx_hash: any;
-      let status: TransactionResponseType;
+      const status: TransactionResponseType = 'APPROVED';
 
-      if (is_approve && is_approve === true) {
-        tx_hash = await this.ethersService.approveDelegation(
-          nik,
-          consumer_code,
-          provider_code,
-          1,
-        );
-
-        status = 'APPROVED';
-      } else {
-        tx_hash = await this.ethersService.approveDelegation(
-          nik,
-          consumer_code,
-          provider_code,
-          0,
-        );
-        status = 'REJECTED';
-      }
+      const tx_hash = await this.ethersService.approveDelegation(
+        nik,
+        consumer_code,
+        provider_code,
+        request_id,
+        transaction_id,
+        reference_id,
+        request_date,
+      );
 
       const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${tx_hash.hash}`;
 
@@ -138,6 +127,12 @@ export class CreditorService implements ICreditorService {
     }
   }
 
+  /**
+   * !Code below will be takeout
+   * @param nik
+   * @param creditor_code
+   * @returns
+   */
   async getStatusCreditorDelegation(
     nik: string,
     creditor_code: string,
@@ -164,6 +159,17 @@ export class CreditorService implements ICreditorService {
     }
   }
 
+  /**
+   * !request_id, transaction_id, referenced_id, request_date will be moved to delegation approval
+   * @param nik
+   * @param consumer_code
+   * @param provider_code
+   * @param request_id
+   * @param transaction_id
+   * @param referenced_id
+   * @param request_date
+   * @returns
+   */
   async createDelegation(
     nik: string,
     consumer_code: string,
@@ -217,6 +223,18 @@ export class CreditorService implements ICreditorService {
     }
   }
 
+  /**
+   * TODO: Adjustment on Ethers Service
+   * @param debtor_nik
+   * @param creditor_code
+   * @param name
+   * @param creditor_name
+   * @param application_date
+   * @param approval_date
+   * @param url_KTP
+   * @param url_approval
+   * @returns
+   */
   async addDebtorToCreditor(
     debtor_nik: string,
     creditor_code: string,
@@ -333,16 +351,17 @@ export class CreditorService implements ICreditorService {
     }
   }
 
+  /**
+   * !Takeout status, => getActiveCreditor
+   * @param debtor_nik
+   * @param status
+   * @returns
+   */
   async getActiveCreditorByStatus(
     debtor_nik: string,
-    status: TransactionCommonType,
   ): Promise<WalletAddressType[]> {
     try {
-      const convertedStatus = convertToEnumValue(status);
-      const data = await this.ethersService.getActiveCreditorByStatus(
-        debtor_nik,
-        convertedStatus,
-      );
+      const data = await this.ethersService.getActiveCreditors(debtor_nik);
 
       return data;
     } catch (error: any) {
@@ -350,6 +369,47 @@ export class CreditorService implements ICreditorService {
       if (error.reason === 'NikNeedRegistered()') {
         throw new BadRequestException('NIK need to be registered first.');
       }
+      throw error;
+    }
+  }
+
+  async processAction(
+    debtor_nik: string,
+    debtor_name: string,
+    creditor_consumer_code: string,
+    creditor_provider_code: string,
+    creditor_provider_name: string,
+    application_date: string,
+    approval_date: string,
+    url_KTP: string,
+    url_approval: string,
+    request_id: string,
+    transaction_id: string,
+    reference_id: string,
+    request_date: string,
+  ): Promise<ContractTransactionReceipt & { onchain_url: string }> {
+    try {
+      const data = await this.ethersService.processAction(
+        debtor_nik,
+        debtor_name,
+        creditor_consumer_code,
+        creditor_provider_code,
+        creditor_provider_name,
+        application_date,
+        approval_date,
+        url_KTP,
+        url_approval,
+        request_id,
+        transaction_id,
+        reference_id,
+        request_date,
+      );
+
+      const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${data.hash}`;
+
+      return { ...data, onchain_url };
+    } catch (error) {
+      this.logger.error('Process Action Service Error: ', error);
       throw error;
     }
   }

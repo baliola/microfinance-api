@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsString } from 'class-validator';
+import { IsDateString, IsString } from 'class-validator';
 
 export class DelegationApprovalDTO {
   @ApiProperty({
@@ -8,13 +8,6 @@ export class DelegationApprovalDTO {
   })
   @IsString()
   debtor_nik: string;
-
-  @ApiProperty({
-    description: 'Approval status (true or false).',
-    example: true,
-  })
-  @IsBoolean()
-  is_approve: boolean;
 
   @ApiProperty({
     description: 'Unique code from creditor (consumer).',
@@ -29,4 +22,32 @@ export class DelegationApprovalDTO {
   })
   @IsString()
   creditor_provider_code: string;
+
+  @ApiProperty({
+    description: 'Unique Identifier of the request.',
+    example: '...',
+  })
+  @IsString()
+  request_id: string;
+
+  @ApiProperty({
+    description: 'Unique Identifier of the transaction.',
+    example: '...',
+  })
+  @IsString()
+  transaction_id: string;
+
+  @ApiProperty({
+    description: 'Unique Identifier of the reference.',
+    example: '...',
+  })
+  @IsString()
+  reference_id: string;
+
+  @ApiProperty({
+    description: 'Date of the request.',
+    example: '...',
+  })
+  @IsDateString()
+  request_date: string;
 }

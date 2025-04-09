@@ -4,6 +4,7 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -19,8 +20,6 @@ import {
 } from 'ethers';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { IsApprove } from 'src/model/creditor/util/creditor-type.service';
-import { StatusCreditorDelegation } from 'src/utils/enum';
 import { WalletAddressType } from 'src/utils/type/type';
 
 @Injectable()
@@ -29,6 +28,8 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
   private wallet: Wallet;
   private contract: Contract;
   private readonly abiCoder = AbiCoder.defaultAbiCoder();
+  private blockchainConnected = false;
+  private connectionError: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -37,13 +38,30 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     this.onModuleInit();
   }
 
-  onModuleInit() {
+  async onModuleInit() {
     const rpcUrl = this.configService.get<string>('RPC_URL');
     if (!rpcUrl) {
       throw new Error('RPC_URL is not defined in the environment variables');
     }
 
     this.provider = new JsonRpcProvider(rpcUrl);
+
+    try {
+      await this.provider.getNetwork();
+      this.blockchainConnected = true;
+      this.logger.log(`Connected to blockchain at ${rpcUrl}`);
+    } catch (error: any) {
+      this.blockchainConnected = false;
+      this.connectionError = error.message;
+      this.logger.error(
+        `Unable to connect to blockchain at ${rpcUrl}: ${error.message}`,
+      );
+      // Do not throw error here so that the server keeps running.
+      throw new ServiceUnavailableException(
+        `Blockchain connection error: ${error.message}`,
+      );
+    }
+
     const privateKey = this.configService.get<string>('PRIVATE_KEY');
     if (privateKey) {
       this.wallet = new Wallet(privateKey, this.provider);
@@ -395,7 +413,10 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     customer_nik: string,
     consumer_code: string,
     provider_code: string,
-    is_approve: IsApprove,
+    request_id: string,
+    transaction_id: string,
+    reference_id: string,
+    request_date: string,
   ) {
     try {
       const hashCustomerNIK = keccak256(
@@ -409,8 +430,16 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
       );
 
       const functionCall = this.contract.interface.encodeFunctionData(
-        'delegate(bytes32,bytes32,bytes32,uint8)',
-        [hashCustomerNIK, hashConsumerCode, hashProviderCode, is_approve],
+        'delegate(bytes32,bytes32,bytes32,string,string,string,string)',
+        [
+          hashCustomerNIK,
+          hashConsumerCode,
+          hashProviderCode,
+          request_id,
+          transaction_id,
+          reference_id,
+          request_date,
+        ],
       );
 
       return await this.executeMetaTransaction(this.wallet, functionCall);
@@ -539,19 +568,69 @@ export class EthersService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getActiveCreditorByStatus(
-    debtor_nik: string,
-    status: StatusCreditorDelegation,
-  ) {
+  async getActiveCreditors(debtor_nik: string) {
     try {
-      const data = await this.contract.getActiveCreditorsByStatus(
+      const data = await this.contract.getActiveCreditors(
         keccak256(this.abiCoder.encode(['string'], [debtor_nik])),
-        status,
       );
 
       return data;
     } catch (error) {
       this.logger.error(error);
+      throw error;
+    }
+  }
+
+  async processAction(
+    debtor_nik: string,
+    debtor_name: string,
+    creditor_consumer_code: string,
+    creditor_provider_code: string,
+    creditor_name: string,
+    application_date: string,
+    approval_date: string,
+    url_KTP: string,
+    url_approval: string,
+    request_id: string,
+    transaction_id: string,
+    reference_id: string,
+    request_date: string,
+  ) {
+    try {
+      const hashNik = keccak256(this.abiCoder.encode(['string'], [debtor_nik]));
+      const hashCreditorConsumerCode = keccak256(
+        this.abiCoder.encode(['string'], [creditor_consumer_code]),
+      );
+      const hashCreditorProviderCode = keccak256(
+        this.abiCoder.encode(['string'], [creditor_provider_code]),
+      );
+      const metadata = JSON.stringify({
+        name: debtor_name,
+        creditorName: creditor_name,
+        applicationDate: application_date,
+        approvalDate: approval_date,
+        urlKTP: url_KTP,
+        urlApproval: url_approval,
+        requestId: request_id,
+        transactionId: transaction_id,
+        referenceId: reference_id,
+        requestDate: request_date,
+      });
+
+      // function call for calling smart contract
+      const functionCall = this.contract.interface.encodeFunctionData(
+        'processAction',
+        [
+          hashNik,
+          hashCreditorConsumerCode,
+          hashCreditorProviderCode,
+          `${metadata}`,
+        ],
+      );
+
+      return await this.executeMetaTransaction(this.wallet, functionCall);
+    } catch (error) {
+      this.logger.error('Process Action Ethers Service Error: ', error);
       throw error;
     }
   }

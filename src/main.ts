@@ -84,7 +84,7 @@ async function bootstrap() {
     .setDescription(
       'Documentation of API that interact on Microfinance based on DJoin Case',
     )
-    .setVersion('1.0.0')
+    .setVersion('1.1.0')
     .build();
   const doc = SwaggerModule.createDocument(app, swaggerOptions, {
     extraModels: [WrapperResponseDTO],

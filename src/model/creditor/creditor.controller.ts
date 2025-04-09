@@ -8,21 +8,16 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { StatusCreditorDelegationDTO } from './dto/status-delegation.dto';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
   ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
-  ApiQuery,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { ReqCreditorDelegationDTO } from './dto/req-delegation.dto';
 import { DelegationApprovalDTO } from './dto/delegation-approval.dto';
-import { ReqDelegationResponseDTO } from './dto/response/req-delegation-res.dto';
 import { DelegationApprovalResponseDTO } from './dto/response/delegation-approval-res.dto';
-import { StatusDelegationResponseDTO } from './dto/response/status-delegation-res.dto';
 import { RegistrationCreditorResponseDTO } from './dto/response/registration-res.dto';
 import { CreditorService } from './creditor.service';
 import { WrapperResponseDTO } from '../../common/helper/response';
@@ -36,8 +31,10 @@ import { PurchasePackageResponseDTO } from './dto/response/purchase-package-res.
 import { GetCreditorDTO } from './dto/get-creditor.dto';
 import { GetCreditorResponseDTO } from './dto/response/get-creditor-res.dto';
 import { WalletAddressType } from 'src/utils/type/type';
-import { GetActiveCreditorByStatusDTO } from './dto/get-active-creditor-by-status.dto';
-import { GetActiveCreditorByStatusResponseDTO } from './dto/response/get-active-creditor-by-status-res.dto';
+import { GetActiveCreditorsDTO } from './dto/get-active-creditor-by-status.dto';
+import { GetActiveCreditorsResponseDTO } from './dto/response/get-active-creditor-by-status-res.dto';
+import { ProcessActionDTO } from './dto/process-action.dto';
+import { ProcessActionResponseDTO } from './dto/response/process-action-res.dto';
 
 @Controller('/api/creditor')
 export class CreditorController {
@@ -46,279 +43,11 @@ export class CreditorController {
     private readonly logger: Logger,
   ) {}
 
-  @ApiExtraModels(WrapperResponseDTO, ReqDelegationResponseDTO)
-  @ApiOperation({
-    summary: 'Request Delegation',
-    description: 'Request delegation to creditor for accessing data.',
-  })
-  @ApiOkResponse({
-    description: 'Creditor approval request successfully sent.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(WrapperResponseDTO) },
-        {
-          properties: {
-            data: { $ref: getSchemaPath(ReqDelegationResponseDTO) },
-            message: {
-              type: 'string',
-              example: 'Delegation request to creditor sent.',
-            },
-            timestamp: {
-              type: 'string',
-              example: 'YYYY-MM-DDT00:00:00.000Z',
-            },
-          },
-        },
-      ],
-    },
-  })
-  @ApiBadRequestResponse({
-    description: 'Bad Request Error.',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'object',
-          properties: {
-            data: { type: 'null', example: null },
-            message: {
-              oneOf: [
-                { type: 'string', example: 'Debtor already exists.' },
-                {
-                  type: 'array',
-                  items: { type: 'string' },
-                  example: ['debtor_nik must be a string'],
-                },
-              ],
-            },
-            timestamp: {
-              type: 'string',
-              example: '2024-02-20T03:22:52.300Z',
-            },
-          },
-        },
-        examples: {
-          ValidationError: {
-            summary: 'Validation Error',
-            value: {
-              data: null,
-              message: [
-                'debtor_nik must be a string',
-                'creditor_consumer_code must be a string',
-                'creditor_provider_code must be a string',
-                'request_id must be a string',
-                'transaction_id must be a string',
-                'reference_id must be a string',
-                'request_date must be a valid ISO 8601 date string',
-              ],
-              timestamp: '2024-02-20T03:22:52.300Z',
-            },
-          },
-          DelegationError: {
-            summary: 'Delegation Error',
-            value: {
-              data: null,
-              message:
-                'Delegation already requested or the debtor and creditors not exist.',
-              timestamp: '2024-02-20T03:22:52.300Z',
-            },
-          },
-        },
-      },
-    },
-  })
-  @Post('creditor-delegation')
-  @HttpCode(HttpStatus.OK)
-  async reqCreditorDelegation(
-    @Body() dto: ReqCreditorDelegationDTO,
-  ): Promise<WrapperResponseDTO<ReqDelegationResponseDTO>> {
-    try {
-      const { tx_hash, onchain_url } =
-        await this.creditorService.createDelegation(
-          dto.debtor_nik,
-          dto.creditor_consumer_code,
-          dto.creditor_provider_code,
-          dto.request_id,
-          dto.transaction_id,
-          dto.reference_id,
-          dto.request_date,
-        );
-
-      const response: ReqDelegationResponseDTO = {
-        nik: dto.debtor_nik,
-        creditor_consumer_code: dto.creditor_consumer_code as WalletAddressType,
-        creditor_provider_code: dto.creditor_provider_code as WalletAddressType,
-        request_id: dto.request_id,
-        transaction_id: dto.transaction_id,
-        reference_id: dto.reference_id,
-        request_date: dto.request_date,
-        tx_hash: tx_hash as `0x${string}`,
-        onchain_url,
-      };
-
-      return new WrapperResponseDTO(
-        response,
-        'Delegation request to creditor sent.',
-      );
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
-    }
-  }
-
-  @ApiExtraModels(WrapperResponseDTO, StatusDelegationResponseDTO)
-  @ApiOperation({
-    summary: 'Get Status Request Delegation',
-    description: 'Retrieve lastest status of delegation to creditor.',
-  })
-  @ApiOkResponse({
-    description: 'Get status of creditor delegation successfully.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(WrapperResponseDTO) },
-        {
-          properties: {
-            data: { $ref: getSchemaPath(StatusDelegationResponseDTO) },
-            message: {
-              type: 'string',
-            },
-            timestamp: {
-              type: 'string',
-              example: 'YYYY-MM-DDT00:00:00.000Z',
-            },
-          },
-        },
-      ],
-    },
-    examples: {
-      approved: {
-        summary: 'Delegation approved.',
-        value: {
-          data: {
-            status: 'APPROVED',
-          },
-          message: 'Delegation approved.',
-        },
-      },
-      rejected: {
-        summary: 'Delegation rejected.',
-        value: {
-          data: {
-            status: 'REJECTED',
-          },
-          message: 'Delegation rejected.',
-        },
-      },
-      pending: {
-        summary: 'Delegation pending.',
-        value: {
-          data: {
-            status: 'PENDING',
-          },
-          message: 'Delegation pending.',
-        },
-      },
-    },
-  })
-  @ApiBadRequestResponse({
-    description: 'Bad Request Error.',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'object',
-          properties: {
-            data: { type: 'null', example: null },
-            message: {
-              oneOf: [
-                { type: 'string', example: 'Debtor already exists.' },
-                {
-                  type: 'array',
-                  items: { type: 'string' },
-                  example: ['debtor_nik must be a string'],
-                },
-              ],
-            },
-            timestamp: {
-              type: 'string',
-              example: '2024-02-20T03:22:52.300Z',
-            },
-          },
-        },
-        examples: {
-          CreditorNotEligibleError: {
-            summary: 'Creditor Not Eligible Error',
-            value: {
-              data: null,
-              message: 'Creditor Code not eligible to check status delegation.',
-              timestamp: '2024-02-20T03:22:52.300Z',
-            },
-          },
-          NIKNotRegisterError: {
-            summary: 'NIK Not Registered Error',
-            value: {
-              data: null,
-              message: 'NIK need to be registered first.',
-              timestamp: '2024-02-20T03:22:52.300Z',
-            },
-          },
-        },
-      },
-    },
-  })
-  @Get('creditor-delegation/status')
-  @HttpCode(HttpStatus.OK)
-  @ApiQuery({
-    name: 'nik',
-    required: true,
-    description: 'National Identification number.',
-    example: '123...',
-  })
-  @ApiQuery({
-    name: 'creditor_code',
-    required: true,
-    description: 'Unique code of creditor.',
-    example: '...',
-  })
-  async statusCreditorDelegation(
-    @Query() dto: StatusCreditorDelegationDTO,
-  ): Promise<WrapperResponseDTO<StatusDelegationResponseDTO>> {
-    try {
-      const { nik, creditor_code } = dto;
-      const status = await this.creditorService.getStatusCreditorDelegation(
-        nik,
-        creditor_code,
-      );
-
-      let message: string;
-      switch (status) {
-        case 'APPROVED':
-          message = 'Delegation approved.';
-          break;
-        case 'PENDING':
-          message = 'Delegation pending.';
-          break;
-        case 'REJECTED':
-          message = 'Delegation rejected.';
-          break;
-        case 'NONE':
-          message = 'Delegation has none status.';
-          break;
-      }
-      const response: StatusDelegationResponseDTO = {
-        status,
-      };
-      this.logger.log('Request success.');
-      return new WrapperResponseDTO(response, message);
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
-    }
-  }
-
   @ApiExtraModels(WrapperResponseDTO, DelegationApprovalResponseDTO)
   @ApiOperation({
     summary: 'Give approval or rejection of delegation request',
-    description:
-      'Give approval for access for other creditor to access debtor active data from source creditor.',
+    description: `Give approval for access for other creditor to access debtor active data from source creditor. This Endpoint require **Add Debtor To Creditor** first.`,
+    // 'Give approval for access for other creditor to access debtor active data from source creditor.',
   })
   @ApiOkResponse({
     description: 'Get status of provider delegation successfully.',
@@ -423,17 +152,23 @@ export class CreditorController {
     try {
       const {
         debtor_nik,
-        is_approve,
         creditor_consumer_code,
         creditor_provider_code,
+        request_id,
+        transaction_id,
+        reference_id,
+        request_date,
       } = dto;
 
       const { tx_hash, status, onchain_url } =
         await this.creditorService.delegationApproval(
           debtor_nik,
-          is_approve,
           creditor_consumer_code,
           creditor_provider_code,
+          request_id,
+          transaction_id,
+          reference_id,
+          request_date,
         );
 
       const response: DelegationApprovalResponseDTO = {
@@ -1003,11 +738,11 @@ export class CreditorController {
 
   @ApiExtraModels(WrapperResponseDTO, GetCreditorResponseDTO)
   @ApiOperation({
-    summary: 'Get Active Creditor by Status',
-    description: 'Get Active Creditor Data based on status.',
+    summary: 'Get Active Creditors',
+    description: 'Get Active Creditors.',
   })
   @ApiOkResponse({
-    description: 'Get Active Creditor success.',
+    description: 'Get Active Creditors success.',
     schema: {
       allOf: [
         { $ref: getSchemaPath(WrapperResponseDTO) },
@@ -1074,17 +809,15 @@ export class CreditorController {
     },
   })
   @Get('active-creditor-by-status')
-  async getActiveCreditorByStatus(
-    @Query() dto: GetActiveCreditorByStatusDTO,
-  ): Promise<WrapperResponseDTO<GetActiveCreditorByStatusResponseDTO>> {
+  async getActiveCreditors(
+    @Query() dto: GetActiveCreditorsDTO,
+  ): Promise<WrapperResponseDTO<GetActiveCreditorsResponseDTO>> {
     try {
-      const { debtor_nik, status } = dto;
-      const data = await this.creditorService.getActiveCreditorByStatus(
-        debtor_nik,
-        status,
-      );
+      const { debtor_nik } = dto;
+      const data =
+        await this.creditorService.getActiveCreditorByStatus(debtor_nik);
 
-      const response: GetActiveCreditorByStatusResponseDTO = {
+      const response: GetActiveCreditorsResponseDTO = {
         creditors: data as WalletAddressType[],
       };
 
@@ -1092,6 +825,138 @@ export class CreditorController {
         response,
         'Get Active Creditors by Status success.',
       );
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  @ApiExtraModels(WrapperResponseDTO, ProcessActionResponseDTO)
+  @ApiOperation({
+    summary: 'Process Action',
+    description: `This function combines the functionality of **'addDebtorToCreditor'** and **'delegate'**.
+
+By calling this function, the system will:
+1. Add the provider creditor to the debtor data with APPROVED status.
+2. Update the status of the delegation request between the consumer and provider creditors to APPROVED.`,
+  })
+  @ApiCreatedResponse({
+    description: 'Process Action success.',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(WrapperResponseDTO) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(ProcessActionResponseDTO) },
+            message: {
+              type: 'string',
+              example: 'Process Action success.',
+            },
+            timestamp: {
+              type: 'string',
+              example: 'YYYY-MM-DDT00:00:00.000Z',
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: [
+                'debtor_nik must be a string',
+                'debtor_name must be a string',
+                'creditor_consumer_code must be a string',
+                'creditor_provider_code must be a string',
+                'creditor_provider_name must be a string',
+                'application_date must be a valid ISO 8601 date string',
+                'approval_date must be a valid ISO 8601 date string',
+                'url_KTP must be a URL address',
+                'url_approval must be a URL address',
+                'request_date must be a valid ISO 8601 date string',
+                'request_id must be a string',
+                'transaction_id must be a string',
+                'reference_id must be a string',
+              ],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+      },
+    },
+  })
+  /**
+   * API Name possibly to change
+   */
+  @Post('process-action')
+  async processAction(
+    @Body() dto: ProcessActionDTO,
+  ): Promise<WrapperResponseDTO<ProcessActionResponseDTO>> {
+    try {
+      const {
+        debtor_name,
+        debtor_nik,
+        creditor_consumer_code,
+        creditor_provider_code,
+        creditor_provider_name,
+        application_date,
+        approval_date,
+        url_KTP,
+        url_approval,
+        reference_id,
+        request_date,
+        request_id,
+        transaction_id,
+      } = dto;
+
+      const data = await this.creditorService.processAction(
+        debtor_nik,
+        debtor_name,
+        creditor_consumer_code,
+        creditor_provider_code,
+        creditor_provider_name,
+        application_date,
+        approval_date,
+        url_KTP,
+        url_approval,
+        request_id,
+        transaction_id,
+        reference_id,
+        request_date,
+      );
+
+      const response: ProcessActionResponseDTO = {
+        tx_hash: data.hash as WalletAddressType,
+        onchain_url: data.onchain_url,
+      };
+      return new WrapperResponseDTO(response, 'Process Action success.');
     } catch (error) {
       this.logger.error(error);
       throw error;
