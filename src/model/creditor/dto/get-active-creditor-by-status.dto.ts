@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsString } from 'class-validator';
-import { TransactionCommonType } from 'src/utils/type/type';
+import { IsString } from 'class-validator';
 
-export class GetActiveCreditorByStatusDTO {
+export class GetActiveCreditorsDTO {
   @ApiProperty({
     description: 'National Identification number from Customer.',
     required: true,
@@ -10,16 +9,4 @@ export class GetActiveCreditorByStatusDTO {
   })
   @IsString()
   debtor_nik: string;
-
-  @ApiProperty({
-    description: 'Status of Active Creditor.',
-    required: true,
-    example: 'PENDING',
-    enum: ['PENDING', 'APPROVED', 'REJECTED'],
-  })
-  @IsIn(['PENDING', 'APPROVED', 'REJECTED'], {
-    message: 'status must be one of: PENDING, APPROVED, REJECTED',
-  })
-  @IsString()
-  status: TransactionCommonType;
 }
