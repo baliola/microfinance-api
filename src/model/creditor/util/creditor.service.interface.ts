@@ -11,6 +11,7 @@ import {
   RegistrationServiceType,
   RemoveCreditorType,
 } from './creditor-type.service';
+import { ContractTransactionReceipt } from 'ethers';
 
 export interface ICreditorService {
   registration(
@@ -24,9 +25,12 @@ export interface ICreditorService {
   ): Promise<RegistrationServiceType>;
   delegationApproval(
     nik: string,
-    is_approve: boolean,
     consumer_code: string,
     provider_code: string,
+    request_id: string,
+    transaction_id: string,
+    reference_id: string,
+    request_date: string,
   ): Promise<DelegationApprovalType>;
   getStatusCreditorDelegation(
     nik: string,
@@ -69,5 +73,20 @@ export interface ICreditorService {
   getActiveCreditorByStatus(
     debtor_nik: string,
     status: TransactionCommonType,
-  ): Promise<any>;
+  ): Promise<WalletAddressType[]>;
+  processAction(
+    debtor_nik: string,
+    debtor_name: string,
+    creditor_consumer_code: string,
+    creditor_provider_code: string,
+    creditor_provider_name: string,
+    application_date: string,
+    approval_date: string,
+    url_KTP: string,
+    url_approval: string,
+    request_id: string,
+    transaction_id: string,
+    reference_id: string,
+    request_date: string,
+  ): Promise<ContractTransactionReceipt & { onchain_url: string }>;
 }

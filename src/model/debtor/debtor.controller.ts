@@ -415,10 +415,10 @@ export class DebtorController {
       },
     },
   })
-  @Post('get-debtor')
+  @Get('get-debtor')
   @HttpCode(HttpStatus.OK)
   async getDebtor(
-    @Body() dto: GetDebtorDTO,
+    @Query() dto: GetDebtorDTO,
   ): Promise<WrapperResponseDTO<GetDebtorResponseDTO>> {
     try {
       const { debtor_nik } = dto;
