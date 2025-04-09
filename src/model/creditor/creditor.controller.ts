@@ -834,8 +834,11 @@ export class CreditorController {
   @ApiExtraModels(WrapperResponseDTO, ProcessActionResponseDTO)
   @ApiOperation({
     summary: 'Process Action',
-    description:
-      'Merge API from Add Debtor to Creditor and Request Delegation.',
+    description: `This function combines the functionality of **'addDebtorToCreditor'** and **'delegate'**.
+
+By calling this function, the system will:
+1. Add the provider creditor to the debtor data with APPROVED status.
+2. Update the status of the delegation request between the consumer and provider creditors to APPROVED.`,
   })
   @ApiCreatedResponse({
     description: 'Process Action success.',
@@ -858,6 +861,60 @@ export class CreditorController {
       ],
     },
   })
+  @ApiBadRequestResponse({
+    description: 'Bad Request Error.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: { type: 'null', example: null },
+            message: {
+              oneOf: [
+                { type: 'string', example: 'Debtor already exists.' },
+                {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['debtor_nik must be a string'],
+                },
+              ],
+            },
+            timestamp: {
+              type: 'string',
+              example: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+        examples: {
+          ValidationError: {
+            summary: 'Validation Error',
+            value: {
+              data: null,
+              message: [
+                'debtor_nik must be a string',
+                'debtor_name must be a string',
+                'creditor_consumer_code must be a string',
+                'creditor_provider_code must be a string',
+                'creditor_provider_name must be a string',
+                'application_date must be a valid ISO 8601 date string',
+                'approval_date must be a valid ISO 8601 date string',
+                'url_KTP must be a URL address',
+                'url_approval must be a URL address',
+                'request_date must be a valid ISO 8601 date string',
+                'request_id must be a string',
+                'transaction_id must be a string',
+                'reference_id must be a string',
+              ],
+              timestamp: '2024-02-20T03:22:52.300Z',
+            },
+          },
+        },
+      },
+    },
+  })
+  /**
+   * API Name possibly to change
+   */
   @Post('process-action')
   async processAction(
     @Body() dto: ProcessActionDTO,
