@@ -408,8 +408,11 @@ export class CreditorService implements ICreditorService {
       const onchain_url = `${this.configService.get<string>('ONCHAIN_URL')}${data.hash}`;
 
       return { ...data, onchain_url };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Process Action Service Error: ', error);
+      if (error.code === 'CALL_EXCEPTION') {
+        throw new BadRequestException('Debtor or Creditors may not exist');
+      }
       throw error;
     }
   }
