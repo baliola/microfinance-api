@@ -9,7 +9,7 @@ import {
 export class RegistrationCreditorDTO {
   @ApiProperty({
     description: 'Unique Code of Creditor.',
-    example: '123...',
+    example: '123',
   })
   @IsString()
   @IsNotEmpty()
@@ -17,7 +17,7 @@ export class RegistrationCreditorDTO {
 
   @ApiProperty({
     description: 'Unique Code of Institution.',
-    example: '...',
+    example: '12345',
   })
   @IsString()
   @IsOptional()
@@ -25,7 +25,7 @@ export class RegistrationCreditorDTO {
 
   @ApiProperty({
     description: 'Name of Institution.',
-    example: '...',
+    example: 'Example Name',
   })
   @IsString()
   @IsOptional()
@@ -33,7 +33,7 @@ export class RegistrationCreditorDTO {
 
   @ApiProperty({
     description: 'Date of the Approval.',
-    example: '...',
+    example: 'YYYY-MM-DD',
   })
   @IsDateString()
   @IsOptional()
@@ -41,7 +41,7 @@ export class RegistrationCreditorDTO {
 
   @ApiProperty({
     description: 'Name of the Signer.',
-    example: '...',
+    example: 'Example Name',
   })
   @IsString()
   @IsOptional()
@@ -49,7 +49,7 @@ export class RegistrationCreditorDTO {
 
   @ApiProperty({
     description: 'Position of the Signer.',
-    example: '...',
+    example: 'Example Position',
   })
   @IsString()
   @IsOptional()
