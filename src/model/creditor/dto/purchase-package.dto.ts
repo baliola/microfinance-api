@@ -5,14 +5,14 @@ import { WalletAddressType } from 'src/utils/type/type';
 export class PurchasePackageDTO {
   @ApiProperty({
     description: 'Creditor Unique Address.',
-    example: '0x...',
+    example: '123',
   })
   @IsString()
   creditor_address: WalletAddressType;
 
   @ApiProperty({
     description: 'Institution Unique Code.',
-    example: '...',
+    example: '123',
   })
   @IsString()
   institution_code: string;
@@ -26,7 +26,7 @@ export class PurchasePackageDTO {
 
   @ApiProperty({
     description: 'Unique Number as Identity of the Invoice.',
-    example: '...',
+    example: '12345',
   })
   @IsString()
   invoice_number: string;
