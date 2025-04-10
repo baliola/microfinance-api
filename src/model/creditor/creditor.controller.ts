@@ -840,7 +840,7 @@ By calling this function, the system will:
 1. Add the provider creditor to the debtor data with APPROVED status.
 2. Update the status of the delegation request between the consumer and provider creditors to APPROVED.`,
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: 'Process Action success.',
     schema: {
       allOf: [
